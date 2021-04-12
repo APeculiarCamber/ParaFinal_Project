@@ -99,6 +99,8 @@ int main(int argc, char* argv[])
     int seed = 10000 * myrank + numranks;
     c_callKernel(numBlocks, threadsCount, p_data, numPoints, seed,
         leftX, lowerY, rightX, upperY);
+
+    writeToMPIFile(p_data, myrank, numranks, numPoints);
 #ifdef DEBUG
     for (int r = 0; r < numranks; ++r) {
         if (r == myrank) {
@@ -108,10 +110,9 @@ int main(int argc, char* argv[])
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
-#endif
-    writeToMPIFile(p_data, myrank, numranks, numPoints);
-
+    
     printf("\n");
     readFromMPIFile(myrank, numranks, numPoints);
+#endif
     return true;
 }
