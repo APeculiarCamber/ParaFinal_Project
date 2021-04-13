@@ -34,9 +34,14 @@ def readInHull(file_name):
 	return points
 
 if __name__=="__main__":
+	if (len(sys.argv) < 3):
+		print("FORMAT: python", sys.argv[0], "<points file> <hull file>")
+		print("For file formatting details, see source code for readIn functions.")
+		exit(-1)
+	# plot points
 	points = readInPoints(sys.argv[1])
 	matplotlib.pyplot.scatter(points[0], points[1]) 
-
+	# plot hull
 	hull = readInHull(sys.argv[2])
 	matplotlib.pyplot.plot(hull[0], hull[1], linestyle='solid', color='blue')
 	matplotlib.pyplot.show()
