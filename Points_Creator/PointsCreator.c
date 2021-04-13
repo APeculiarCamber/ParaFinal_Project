@@ -43,6 +43,17 @@ void writeToMPIFile(Point * p_data, int myrank, int numranks, int numPoints) {
     rc = MPI_File_close(&mpiFile);
 }
 
+int comparePoints(const void* a, const void* b) {
+  int yComp = (((Point*)a)->y > ((Point*)b)->y) - (((Point*)a)->y < ((Point*)b)->y);
+  int xComp = (((Point*)a)->x > ((Point*)b)->x) - (((Point*)a)->x < ((Point*)b)->x);
+  return xComp == 0 ? yComp : xComp;
+}
+
+
+void localSort(Point * points, size_t numPoints) {
+    qsort (points, numPoints, sizeof(Point), comparePoints);
+}
+
 void readFromMPIFile(int myrank, int numranks, int numPoints) {
     MPI_File mpiFile;
     MPI_Status stat;
@@ -53,15 +64,19 @@ void readFromMPIFile(int myrank, int numranks, int numPoints) {
     rc = MPI_File_read_at(mpiFile, sizeof(Point) * myrank * numPoints, points,
         numPoints, MPI_POINT, &stat);
 
-    MPI_Barrier(MPI_COMM_WORLD);
     rc = MPI_File_close(&mpiFile);
 
     for (int r = 0; r < numranks; ++r) {
         if (r == myrank) {
-            printf("*For Rank %d:\n", myrank);
+            printf("*For File Rank %d:\n", myrank);
             for (int p = 0; p < numPoints; ++p)
-                printf("{%f, %f}\n", points[p].x, points[p].y);
+                printf("{%f, %f} for rank %d\n", points[p].x, points[p].y, myrank);
+            localSort(points, numPoints);
+            printf("*For File Rank %d:\n", myrank);
+            for (int p = 0; p < numPoints; ++p)
+                printf("{%f, %f} for rank %d\n", points[p].x, points[p].y, myrank);
         }
+
         MPI_Barrier(MPI_COMM_WORLD);
     }
 }
@@ -69,16 +84,17 @@ void readFromMPIFile(int myrank, int numranks, int numPoints) {
 // TODO : add MPI and parallel file processing for even larger files
 int main(int argc, char* argv[])
 {
-    if (argc < 7) {
-        printf("FORMAT: %s <num points per proc> <num threads> <left x> <lower y> <right x> <upper y>\n", argv[0]);
-        return false;
-    }
     int myrank, numranks;
     MPI_Init(&argc, &argv); // init MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numranks);
     createPointType();
 
+    if (argc < 7) {
+        if (myrank == 0)
+            printf("FORMAT: %s <num points per proc> <num threads> <left x> <lower y> <right x> <upper y>\n", argv[0]);
+        return false;
+    }
     size_t numPoints = 0;
     if (1 != sscanf(argv[1], "%zu", &numPoints))
         return false;
@@ -96,7 +112,7 @@ int main(int argc, char* argv[])
 
     size_t numBlocks = ((numPoints) + (threadsCount - 1)) / threadsCount;
     numBlocks = (numBlocks > 65535) ? 65535 : numBlocks;
-    int seed = 10000 * myrank + numranks;
+    int seed = (10000 * myrank) + numranks;
     c_callKernel(numBlocks, threadsCount, p_data, numPoints, seed,
         leftX, lowerY, rightX, upperY);
 

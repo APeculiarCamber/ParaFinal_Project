@@ -8,13 +8,20 @@
 #define LEAD_RANK 0
 #define STARTING_VECTOR_SIZE 64
 
-TODO : file offsets appear to be in bytes?
+// TODO : file offsets appear to be in bytes?
 
 struct Point {
     float x;
     float y;
 };
 typedef struct Point Point;
+
+void ensureReturnCode(int rc, char* point) {
+    if (rc != MPI_SUCCESS) {
+        printf("An error (%d) occured when %s\n", rc, point);
+        exit(-1);
+    }
+}
 
 MPI_Datatype MPI_POINT;
 void createPointType() {
@@ -37,9 +44,12 @@ void readInData(char * fileName, Point * points,
 
     int rc = MPI_File_open(MPI_COMM_WORLD, fileName, 
         MPI_MODE_RDONLY, MPI_INFO_NULL, &mpiFile);
+    ensureReturnCode(rc, "opening file");
     rc = MPI_File_read_at(mpiFile, (myrank * stride), points,
                   numPoints, MPI_POINT, &stat);
+    ensureReturnCode(rc, "reading file");
     rc = MPI_File_close(&mpiFile);
+    ensureReturnCode(rc, "closing file");
 }
 
 int comparePoints(const void* a, const void* b) {
@@ -61,78 +71,63 @@ void pickPivots(Point * points, size_t numPoints, Point * pivots, int oversampli
     for (int o = 0; o < oversampling; ++o) {
         int r = rand() % numPoints;
         pivots[o] = points[r];
+        // swap to preserve contents and allow rand decr
         Point p = points[r];
         points[r] = points[numPoints - 1];
+        points[numPoints - 1] = p;
         numPoints -= 1;
     }
 }
 
 void extractPivotBins(Point * pivots, int numranks, int oversampling, Point * finalPivots) {
-    for (int n = 1; n < numranks; ++n) {
-        finalPivots[n] = pivots[(oversampling * n) - 1];
+    for (int n = 0; n < numranks - 1; ++n) {
+        finalPivots[n] = pivots[(oversampling * (n+1)) - 1];
     }
 }
 
 int binSearch(Point * points, int numPoints, Point p) {
     // TODO : I've got a bad track record with bin search, test this
+    int i;
+    for (i = 0; i < numPoints; ++i)
+        if (comparePoints(&p, &points[i]) <= 0)
+            return i;
+    return i;
+
+    /*
     int l, r, m;
     l = 0, r = numPoints - 1;
 
     while (l <= r) {
         int m = l + (r - l) / 2;
   
-        if (comparePoints(&points[m], &p) == 0)
+        if (comparePoints(&points[m], &p) == 0) {
             return m;
+        }
   
         if (comparePoints(&points[m], &p) < 0)
             l = m + 1;
         else
             r = m - 1;
     }
-    return l;
+    return l;*/
 }
-/*
-// TODO : could be useful, or not...
-void sortIntoBinsInPlace(Point * points, int * steps, Point * finalPivots,
-    size_t numPoints, int numranks) {
-    int * stepsTemp = calloc(numranks + 2, sizeof(int));
-    // count size of bins
-    for (int p = 0; p < numPoints; ++p)
-        steps[binSearch(finalPivots, numranks, points[p]) + 1]++;
-    // modify size of bins into steps, steps[0] = 0
-    for (int s = 1; s < numranks + 1; ++s)
-        stepsTemp[s] = (steps[s] += steps[s-1]);
-
-    int currentBin = 0;
-    int numBins = numranks;
-    int bin;
-    Point t;
-    for (int p = 0; p < numPoints; ) {
-        bin = binSearch(finalPivots, numranks, points[p]);
-        t = points[p];
-        points[p] = points[stepsTemp[bin]];
-        points[stepsTemp[bin]] = t;
-
-        p += (bin == currentBin);
-        currentBin += (steps[currentBin + 1] == p);
-    }
-    free(stepsTemp);
-}*/
 
 void sortIntoBins(Point * points, Point * bins, int * steps, int * sizes,
-    Point * finalPivots, size_t numPoints, int numranks) {
+    Point * finalPivots, size_t numPoints, int numranks, int myrank) {
 
-    int * stepsTemp = calloc(numranks + 1, sizeof(int));
+    int * stepsTemp = calloc(numranks, sizeof(int));
     // count size of bins
-    for (int p = 0; p < numPoints; ++p)
-        sizes[binSearch(finalPivots, numranks, points[p]) + 1]++;
-    // modify size of bins into steps, steps[0] = 0
-    for (int s = 1; s < numranks + 1; ++s)
-        stepsTemp[s] = (steps[s] = steps[s-1] + sizes[s]);
+    for (int p = 0; p < numPoints; ++p) {
+        sizes[binSearch(finalPivots, numranks - 1, points[p])]++;
+    }
 
+    for (int s = 1; s < numranks; ++s) {
+        stepsTemp[s] = (steps[s] = steps[s-1] + sizes[s-1]);
+    }
+    
     int bin;
     for (int p = 0; p < numPoints; ++p) {
-        bin = binSearch(finalPivots, numranks, points[p]);
+        bin = binSearch(finalPivots, numranks - 1, points[p]);
         bins[stepsTemp[bin]] = points[p];
         stepsTemp[bin]++;
     }
@@ -151,7 +146,7 @@ Point * vectorPop(Point * points, int * cap, int * size) {
 }
 
 Point * vectorAdd(Point * points, int * cap, int * size, Point added) {
-    if (cap <= size) {
+    if ((*cap) <= (*size)) {
         *cap = (*cap) * 2;
         points = realloc(points, (*cap) * sizeof(Point));
     }
@@ -174,51 +169,53 @@ float cross(Point a, Point b, Point c) {
     return (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x); 
 }
 
-// TODO : currently this makes two passes, which is very overwhelming on passing
-// TODO : gather is an alternative, but would potentially result in arrays too big
+// TODO : test on case where x values of 2 floats are identical...
+// TODO : improve message passing to block on first size get, them use non-blocking to perform ops while recving??????
 Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int numranks, unsigned * hullSize) {
-    int topCap, topSize;
-    Point * topHull = vectorInit(&topCap, &topSize);
+    int bottomCap, bottomSize;
+    Point * bottomHull = vectorInit(&bottomCap, &bottomSize);
 
     // TRAVERSE THE TOP
     Point * borrowedPoints = myPoints;
     unsigned int numPoints = myNumPoints;
     for (int r = 0; r < numranks; ++r) {
         for (int p = 0; p < numPoints; ++p) {
-            while (topSize >= 2 && cross(topHull[topSize - 2], topHull[topSize - 1], borrowedPoints[p]) <= 0) {
-                topHull = vectorPop(topHull, &topCap, &topSize);
+            while (bottomSize >= 2 && cross(bottomHull[bottomSize - 2], bottomHull[bottomSize - 1], borrowedPoints[p]) <= 0) {
+                bottomHull = vectorPop(bottomHull, &bottomCap, &bottomSize);
             }
-            topHull = vectorAdd(topHull, &topCap, &topSize, borrowedPoints[p]);
+            bottomHull = vectorAdd(bottomHull, &bottomCap, &bottomSize, borrowedPoints[p]);
         }
 
         if (r + 1 < numranks) {
+            printf("Rank 0: Retrieving data from rank %d\n", r + 1);
             // get the next array
-            MPI_Recv(&numPoints, 1, MPI_UNSIGNED, r+1, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
             if (borrowedPoints != myPoints)
                 free(borrowedPoints);
+            MPI_Recv(&numPoints, 1, MPI_UNSIGNED, r + 1, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             borrowedPoints = malloc(numPoints * sizeof(Point));
-            MPI_Recv(borrowedPoints, numPoints, MPI_POINT, r+1, 0,
+            MPI_Recv(borrowedPoints, numPoints, MPI_POINT, r + 1, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
     }
 
     // TRAVERSE THE BOTTOM, TODO : going the other direction ( > 0) might work, but the math is poorly understood rn
-    int bottomCap, bottomSize;
-    Point * bottomHull = vectorInit(&bottomCap, &bottomSize);
+    int topCap, topSize;
+    Point * topHull = vectorInit(&topCap, &topSize);
+    
     for (int r = numranks - 1; r >= 0; --r) {
-        for (int p = 0; p < numPoints; ++p) {
-            while (bottomSize >= 2 && cross(bottomHull[bottomSize - 2], bottomHull[bottomSize - 1], borrowedPoints[p]) <= 0) {
-               bottomHull = vectorPop(bottomHull, &bottomCap, &bottomSize);
+        for (int p = numPoints - 1; p >= 0; --p) {
+            while (topSize >= 2 && cross(topHull[topSize - 2], topHull[topSize - 1], borrowedPoints[p]) <= 0) {
+               topHull = vectorPop(topHull, &topCap, &topSize);
             }
-            bottomHull = vectorAdd(bottomHull, &bottomCap, &bottomSize, borrowedPoints[p]);
+            topHull = vectorAdd(topHull, &topCap, &topSize, borrowedPoints[p]);
         }
 
 
         // get the next array
         if (r - 1 == 0) {
-            if (borrowedPoints != myPoints)
-                free(borrowedPoints);
+            free(borrowedPoints);
             numPoints = myNumPoints;
             borrowedPoints = myPoints;
         } else {
@@ -230,6 +227,7 @@ Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int num
              MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
     }
+
     Point * concat = ConcatHulls(topHull, topSize, bottomHull, bottomSize, hullSize);
     // free(borrowedPoints);
     free(topHull);
@@ -237,7 +235,7 @@ Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int num
     return concat;
 }
 
-void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank) {
+void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank, int numranks) {
     // send and block on small size
     MPI_Send(&numPoints, 1, MPI_UNSIGNED, LEAD_RANK, 0, MPI_COMM_WORLD);
     MPI_Send(myPoints, numPoints, MPI_POINT, LEAD_RANK, 0, MPI_COMM_WORLD);
@@ -246,6 +244,7 @@ void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank) {
 }
 
 void outputHull(Point * hull, unsigned hullSize) {
+    printf("\n\nTHE CONVEX HULL IS:\n");
     for (int p = 0; p < hullSize; ++p) {
         printf("{%f, %f}\n", hull[p].x, hull[p].y);
     }
@@ -264,56 +263,69 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &numranks);
     createPointType();
 
-    size_t numPoints = 0;
-    if (1 != sscanf(argv[1], "%zu", &numPoints))
+    size_t totlalPoints = 0;
+    if (1 != sscanf(argv[1], "%zu", &totlalPoints))
         return false;
     int oversampling = atoi(argv[3]);
-    printf("Number elements is %zu\n", numPoints);
-    numPoints = numPoints / numranks;
+    printf("Number elements is %zu\n", totlalPoints);
+    size_t numPoints = totlalPoints / numranks;
     // add stragglers to the last rank
-    numPoints += (numranks == myrank + 1) * (numPoints % numPoints);
+    numPoints += ((numranks == myrank + 1) * (totlalPoints % numPoints));
 
 
     Point * points = malloc(numPoints * sizeof(Point));
-    readInData(argv[2], points, myrank, numPoints / numranks, numPoints);
+    readInData(argv[2], points, myrank, (totlalPoints / numranks) * sizeof(Point), numPoints);
+
     // get pivots
-    Point * pivots = malloc((numranks + 1) * oversampling * sizeof(Point));
-    pickPivots(points, numPoints, pivots, oversampling);
-    // All Gather pivots, TODO : make sure you're pointer math is OK
+    Point * pivots = malloc(numranks * oversampling * sizeof(Point));
+    Point * localPivots = malloc(oversampling * sizeof(Point));
+    pickPivots(points, numPoints, localPivots, oversampling);
+    // All Gather pivots
     int rc = MPI_Allgather(
+        localPivots, oversampling, MPI_POINT, 
         pivots, oversampling, MPI_POINT, 
-        pivots + oversampling, oversampling, MPI_POINT, 
-        MPI_COMM_WORLD); // TODO : make sure the self-send is correct
-    localSort(pivots + oversampling, numranks * oversampling);
+        MPI_COMM_WORLD);
+
+    localSort(pivots, numranks * oversampling);
+
     Point * finalPivots = malloc((numranks - 1) * sizeof(Point));
     extractPivotBins(pivots, numranks, oversampling, finalPivots);
     free(pivots);
 
     // place into bins based on pivots, TODO : see about in-place
-    int * steps = calloc(numranks + 1, sizeof(int));
-    int * sizes = calloc(numranks + 1, sizeof(int));
-    Point * bins = malloc(numPoints * sizeof(Point));
-    sortIntoBins(points, bins, steps, sizes, finalPivots, numPoints, numranks);
+    int * steps = calloc(numranks, sizeof(int));
+    int * sizes = calloc(numranks, sizeof(int));
+    Point * bins = calloc(numPoints, sizeof(Point));
+    sortIntoBins(points, bins, steps, sizes, finalPivots, numPoints, numranks, myrank);
 
     // send respective bin sizes to others
     int * allMyBinSizes = malloc(numranks * sizeof(int));
-    int * allMyBinDispl = malloc((numranks + 1) * sizeof(int));
+    int * allMyBinDispl = malloc(numranks * sizeof(int));
     MPI_Alltoall(sizes, 1, MPI_INT, allMyBinSizes, 1, MPI_INT, MPI_COMM_WORLD);
 
     // exhange bins with other processes
     size_t total = 0;
-    allMyBinDispl[0] = 0;
     for (int i = 0; i < numranks; i++) {
+        allMyBinDispl[i] = total;
         total += allMyBinSizes[i];
-        allMyBinDispl[i+1] = allMyBinDispl[i] + allMyBinSizes[i];
     }
+
     Point * myREALPoints = malloc(total * sizeof(Point));
+    printf("Rank %d's bin size is %lu\n", myrank, total);
     MPI_Alltoallv(bins, sizes, steps, MPI_POINT, myREALPoints,
                   allMyBinSizes, allMyBinDispl, MPI_POINT, MPI_COMM_WORLD);
+    
     // sort my bin
     localSort(myREALPoints, total);
 
-    // TODO : mark a test here, figure out if sort is good
+    for (int r = 0; r < numranks; ++r) {
+        if (r == myrank) {
+            for (int i = 0; i < total; ++i)
+                printf("Rank %d: {%f, %f}\n", myrank, myREALPoints[i].x, myREALPoints[i].y);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    printf("\n");
 
     // perform the monotone chain
     if (myrank == LEAD_RANK) {
@@ -321,9 +333,10 @@ int main(int argc, char* argv[])
         Point * hull = performHullContstruction(myREALPoints, total, numranks, &hullSize);
         outputHull(hull, hullSize);
     } else {
-        prepareToSendToLeadRank(myREALPoints, total, myrank);
+        prepareToSendToLeadRank(myREALPoints, total, myrank, numranks);
     }
 
     // TODO : PERFORM A TON OF FREES
+    MPI_Barrier(MPI_COMM_WORLD);
     return true;
 }
