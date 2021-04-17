@@ -28,6 +28,8 @@ void createPointType() {
 extern void c_cudaAlloc(Point ** points, size_t numPoints);
 extern void c_callKernel(int numBlocks, int threadsCount, Point * p_data, size_t numPoints, int seed,
         float leftX, float lowerY, float rightX, float upperY);
+extern void setCudaDeviceByRank(int myrank);
+extern void freeCudaMemory(Point * p_data);
 
 void writeToMPIFile(Point * p_data, int myrank, int numranks, int numPoints) {
     MPI_File mpiFile;
@@ -89,6 +91,7 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numranks);
     createPointType();
+    setCudaDeviceByRank(myrank);
 
     if (argc < 7) {
         if (myrank == 0)
@@ -113,10 +116,13 @@ int main(int argc, char* argv[])
     size_t numBlocks = ((numPoints) + (threadsCount - 1)) / threadsCount;
     numBlocks = (numBlocks > 65535) ? 65535 : numBlocks;
     int seed = (10000 * myrank) + numranks;
-    c_callKernel(numBlocks, threadsCount, p_data, numPoints, seed,
+    c_callKernel(numBlocks, threadsCount, p_data, numPoints, 123,
         leftX, lowerY, rightX, upperY);
-
+    if (p_data[0].x == 0.0) {
+        printf("Rank %d has problems. %0.2f %0.2f %0.2f %0.2f\n", myrank, leftX, lowerY, rightX, upperY);
+    }
     writeToMPIFile(p_data, myrank, numranks, numPoints);
+/*
 #ifdef DEBUG
     for (int r = 0; r < numranks; ++r) {
         if (r == myrank) {
@@ -130,5 +136,8 @@ int main(int argc, char* argv[])
     printf("\n");
     readFromMPIFile(myrank, numranks, numPoints);
 #endif
+*/
+    freeCudaMemory(p_data);
+    MPI_Finalize();
     return true;
 }
