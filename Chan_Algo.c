@@ -23,10 +23,12 @@ struct Polar_vector{
 
 struct Point_stack{
 	struct Point* stack
+	int size;
 };
 
 typedef struct Tuple Tuple;
 typedef struct Polar_vector Polar_l;
+typedef struct Point_stack Polar_s;
 typedef struct Point Point;
 
 void readInData(char* fName, Point * points, int myrank, size_t stride, size_t numPoints){
@@ -169,24 +171,56 @@ int compare (const void *a, const void * b){
 	return (tupleA->angle - tupleB->angle);
 }
 
-Point* Perform_Graham(Point* point_set){
-	/*
-	have list of poitns
-	create empty stack
+void pop_from_stack(Point* point_stack){
+	hull->size = size-1;
+	Point empty;
+	hull[size] = empty;
+}
 
-	find lowest left most point
-	sort coordinates by polar angle
+void add_to_stack(Point* point_stack, Point new_point){
+	hull->size = size+1;
+	hull[size-1] = new_point;
+}
 
-	loop through points
-		keep removing pionts while orientation is not counterclockwise
+Polar_s Perform_Graham(Point* point_set, int set_size){
+	Point_s hull;
+	int current_size = 8;
+	hull.stack = calloc(current_size, sizeof(Point));
+	hull.size = 3;
+
+	hull.stack[0] = point_set[0];
+	hull.stack[1] = point_set[1];
+	hull.stack[2] = point_set[2];
+
+	int i;
+	for (i = 3; i < set_size; i++){
+		prev = point_set[i-1];
+		curr = point_set[i];
+		next = point_set[i+1];
+		bool right_turn = clockwise_turn(prev, curr, next);
+		if (right_turn == false){
+			add_to_stack(&hull, next);
+		}
+		else{
+			while (right_turn(prev,curr,next) == true){
+				pop_from_stack(&hull);
+				int current = hull.size-1;
+				curr = hull.stack[current];
+				prev = hull.stack[current-1];
+			}
+			add_to_stack(&hull, next);
+		}
+	}
+	return hull;
+}
+
+Point* perform_chan(Polar_s* hull_set, Point min_point, int m){
+	Point* final = calloc(m, sizeof(Point));
+
+	int i;
+	for (i = 0 ; i < m; i++){
 		
-	once have set, repeat process and find actual outer hull
-
-	*/
-	Point* hull;
-
-	
-
+	}
 }
 
 int main(int argc, char*argv[]){
@@ -233,7 +267,7 @@ int main(int argc, char*argv[]){
 		final_point_set[i] = final_polar_set.polar_list[i];
 	}
 
-	Point* possible_hull = Perform_Graham(final_point_set);
+	Polar_s hull = Perform_Graham(final_point_set, final_polar_set.size);
 
 	return 0;
 }
