@@ -72,6 +72,10 @@ bool clockwise_turn(Point p1, Point p2, Point p3){
 	}
 }
 
+float orientation(Point p1, Point p2, Point p3){
+	return (p2.y - p1.y)*(p3.x-p2.x) - (p3.y-p2.y)*(p2.x-p1.x);
+}
+
 float return_polar_angle(Point p1, Point p2){
 	float d_x = (p1.y)-(p2.x);
 	float d_y = (p1.y)-(p2.y);
@@ -177,13 +181,13 @@ void pop_from_stack(Point* point_stack){
 	hull[size] = empty;
 }
 
-void add_to_stack(Point* point_stack, Point new_point){
+void add_to_stack(Point* point_stack, Point new_point, int current_size){
 	hull->size = size+1;
 	hull[size-1] = new_point;
 }
 
 Polar_s Perform_Graham(Point* point_set, int set_size){
-	Point_s hull;
+	Polar_s hull;
 	int current_size = 8;
 	hull.stack = calloc(current_size, sizeof(Point));
 	hull.size = 3;
@@ -199,6 +203,10 @@ Polar_s Perform_Graham(Point* point_set, int set_size){
 		next = point_set[i+1];
 		bool right_turn = clockwise_turn(prev, curr, next);
 		if (right_turn == false){
+			if (hull.size == current_size){
+				current_size = current_size*2;
+				realloc(hull.stack, current_size*sizeof(Polar_s));
+			}
 			add_to_stack(&hull, next);
 		}
 		else{
@@ -214,13 +222,53 @@ Polar_s Perform_Graham(Point* point_set, int set_size){
 	return hull;
 }
 
-Point* perform_chan(Polar_s* hull_set, Point min_point, int m){
-	Point* final = calloc(m, sizeof(Point));
+Point* perform_chan(Point_set* hull_set, Point min_point, int m){
+	int current_size = 8;
+	Point* final = calloc(current_size, sizeof(Point));
+
+	Point initial;
+	initial.x = -INFINITY;
+	initial.y = 0;
+
+	final[0] = min_point;
 
 	int i;
+	int count = 1;
+	float max_orientation = 0;
+	Point max_point;
 	for (i = 0 ; i < m; i++){
-		
+		Point current = hull_set[i]
+		if (count == 1){
+			float curr_orientation = orientation(initial, p1, current);
+			if (curr_orientation > max_orientation){
+				max_point = current;
+			}
+		}
 	}
+
+	final[count] = current;
+	count = count+1;
+
+	while(max_point != final[0]){
+		Point max_point
+		for (i = 0 ; i < m; i++){
+			Point current = hull_set[i]
+			if (count == 1){
+				float curr_orientation = orientation(initial, p1, current);
+				if (curr_orientation > max_orientation){
+					max_point = current;
+				}
+			}
+		}
+		count = count+1
+		if (count == current_size){
+			current_size = current_size*2
+			realloc(final, current_size*sizeof(Polar_s));
+		}
+		final[count] = max_point;
+	}
+
+	return final;
 }
 
 int main(int argc, char*argv[]){
