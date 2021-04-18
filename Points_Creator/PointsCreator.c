@@ -118,9 +118,7 @@ int main(int argc, char* argv[])
     int seed = (10000 * myrank) + numranks;
     c_callKernel(numBlocks, threadsCount, p_data, numPoints, 123,
         leftX, lowerY, rightX, upperY);
-    if (p_data[0].x == 0.0) {
-        printf("Rank %d has problems. %0.2f %0.2f %0.2f %0.2f\n", myrank, leftX, lowerY, rightX, upperY);
-    }
+
     writeToMPIFile(p_data, myrank, numranks, numPoints);
 /*
 #ifdef DEBUG
