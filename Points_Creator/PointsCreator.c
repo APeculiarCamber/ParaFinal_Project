@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     size_t numBlocks = ((numPoints) + (threadsCount - 1)) / threadsCount;
     numBlocks = (numBlocks > 65535) ? 65535 : numBlocks;
     int seed = (10000 * myrank) + numranks;
-    c_callKernel(numBlocks, threadsCount, p_data, numPoints, 123,
+    c_callKernel(numBlocks, threadsCount, p_data, numPoints, seed,
         leftX, lowerY, rightX, upperY);
 
     writeToMPIFile(p_data, myrank, numranks, numPoints);
