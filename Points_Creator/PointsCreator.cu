@@ -27,8 +27,8 @@ __global__ void data_kernel(Point* p_data, size_t numPoints, int seed,
     while (index < numPoints) {
         x = curand_uniform (&state);
         y = curand_uniform (&state);
-        p_data[index].x = (x * sizeX) + leftX + 0.1;
-        p_data[index].y = (y * sizeY) + lowerY + 0.1;
+        p_data[index].x = (x * sizeX) + leftX;
+        p_data[index].y = (y * sizeY) + lowerY;
         index += blockDim.x * gridDim.x;
     }
 }
