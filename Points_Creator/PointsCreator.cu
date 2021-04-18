@@ -31,7 +31,6 @@ __global__ void data_kernel(Point* p_data, size_t numPoints, int seed,
         p_data[index].y = (y * sizeY) + lowerY + 0.1;
         index += blockDim.x * gridDim.x;
     }
-    p_data[0].x = 12.0;
 }
 
 
