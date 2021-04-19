@@ -7,8 +7,24 @@
 
 #define LEAD_RANK 0
 #define STARTING_VECTOR_SIZE 64
+#define CLOCK_RATE 512000000.0 // for clock to seconds conversion
 
-// TODO : file offsets appear to be in bytes?
+// TODO ? 
+    // Currently assumes all unique points, the effects of non-unique points on the hull is not perfectly understood
+// TODO : single pass can be added, so long as you verify that ties in x don't anger the algo
+
+typedef unsigned long long ticks;
+
+static __inline__ ticks getticks(void) {
+    unsigned int tbl, tbu0, tbu1;
+    do {
+        __asm__ __volatile__ ("mftbu %0" : "=r"(tbu0));
+        __asm__ __volatile__ ("mftb %0" : "=r"(tbl));
+        __asm__ __volatile__ ("mftbu %0" : "=r"(tbu1));
+    } while (tbu0 != tbu1);
+    return ((((unsigned long long)tbu0) << 32) | tbl);
+}
+
 
 struct Point {
     float x;
@@ -87,29 +103,25 @@ void extractPivotBins(Point * pivots, int numranks, int oversampling, Point * fi
 
 int binSearch(Point * points, int numPoints, Point p) {
     // TODO : I've got a bad track record with bin search, test this
-    int i;
+    /*int i;
     for (i = 0; i < numPoints; ++i)
         if (comparePoints(&p, &points[i]) <= 0)
             return i;
-    return i;
+    return i;*/
 
-    /*
-    int l, r, m;
-    l = 0, r = numPoints - 1;
-
+    int l = 0;
+    int r = numPoints - 1;
+    int m = 0;
     while (l <= r) {
-        int m = l + (r - l) / 2;
-  
-        if (comparePoints(&points[m], &p) == 0) {
+        m = l + ((r - l) / 2);
+        if (comparePoints(&points[m], &p) == 0)
             return m;
-        }
-  
         if (comparePoints(&points[m], &p) < 0)
             l = m + 1;
         else
             r = m - 1;
     }
-    return l;*/
+    return l;
 }
 
 void sortIntoBins(Point * points, Point * bins, int * steps, int * sizes,
@@ -169,33 +181,32 @@ float cross(Point a, Point b, Point c) {
     return (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x); 
 }
 
-// TODO : test on case where x values of 2 floats are identical...
-// TODO : improve message passing to block on first size get, them use non-blocking to perform ops while recving??????
-Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int numranks, unsigned * hullSize) {
+// TODO : this is an old legacy function, preserved for reference.
+/*Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int numranks, unsigned * hullSize) {
     int bottomCap, bottomSize;
     Point * bottomHull = vectorInit(&bottomCap, &bottomSize);
-
+    // TODO : archive this function and implement a new one for single pass with non-blocking message passing
     // TRAVERSE THE TOP
-    Point * borrowedPoints = myPoints;
+    Point * currentPoints = myPoints;
     unsigned int numPoints = myNumPoints;
     for (int r = 0; r < numranks; ++r) {
         for (int p = 0; p < numPoints; ++p) {
-            while (bottomSize >= 2 && cross(bottomHull[bottomSize - 2], bottomHull[bottomSize - 1], borrowedPoints[p]) <= 0) {
+            while (bottomSize >= 2 && cross(bottomHull[bottomSize - 2], bottomHull[bottomSize - 1], currentPoints[p]) <= 0) {
                 bottomHull = vectorPop(bottomHull, &bottomCap, &bottomSize);
             }
-            bottomHull = vectorAdd(bottomHull, &bottomCap, &bottomSize, borrowedPoints[p]);
+            bottomHull = vectorAdd(bottomHull, &bottomCap, &bottomSize, currentPoints[p]);
         }
 
         if (r + 1 < numranks) {
             printf("Rank 0: Retrieving data from rank %d\n", r + 1);
             // get the next array
 
-            if (borrowedPoints != myPoints)
-                free(borrowedPoints);
+            if (currentPoints != myPoints)
+                free(currentPoints);
             MPI_Recv(&numPoints, 1, MPI_UNSIGNED, r + 1, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            borrowedPoints = malloc(numPoints * sizeof(Point));
-            MPI_Recv(borrowedPoints, numPoints, MPI_POINT, r + 1, 0,
+            currentPoints = malloc(numPoints * sizeof(Point));
+            MPI_Recv(currentPoints, numPoints, MPI_POINT, r + 1, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
     }
@@ -206,30 +217,91 @@ Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int num
     
     for (int r = numranks - 1; r >= 0; --r) {
         for (int p = numPoints - 1; p >= 0; --p) {
-            while (topSize >= 2 && cross(topHull[topSize - 2], topHull[topSize - 1], borrowedPoints[p]) <= 0) {
+            while (topSize >= 2 && cross(topHull[topSize - 2], topHull[topSize - 1], currentPoints[p]) <= 0) {
                topHull = vectorPop(topHull, &topCap, &topSize);
             }
-            topHull = vectorAdd(topHull, &topCap, &topSize, borrowedPoints[p]);
+            topHull = vectorAdd(topHull, &topCap, &topSize, currentPoints[p]);
         }
 
 
         // get the next array
         if (r - 1 == 0) {
-            free(borrowedPoints);
+            free(currentPoints);
             numPoints = myNumPoints;
-            borrowedPoints = myPoints;
+            currentPoints = myPoints;
         } else {
         MPI_Recv(&numPoints, 1, MPI_UNSIGNED, r - 1, 0,
              MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        free(borrowedPoints);
-        borrowedPoints = malloc(numPoints * sizeof(Point));
-        MPI_Recv(borrowedPoints, numPoints, MPI_POINT, r - 1, 0,
+        free(currentPoints);
+        currentPoints = malloc(numPoints * sizeof(Point));
+        MPI_Recv(currentPoints, numPoints, MPI_POINT, r - 1, 0,
              MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
     }
 
     Point * concat = ConcatHulls(topHull, topSize, bottomHull, bottomSize, hullSize);
-    // free(borrowedPoints);
+    // free(currentPoints);
+    free(topHull);
+    free(bottomHull);
+    return concat;
+}*/
+
+void reversePointsArray(Point * pts, int size) {
+    int l = 0, r = size - 1;
+    while (l < r) {
+        Point t = pts[l];
+        pts[l++] = pts[r];
+        pts[r--] = t;
+    }
+}
+
+Point * performHullContstruction2(Point * myPoints, unsigned myNumPoints, int numranks, unsigned * hullSize) {
+    int bottomCap, bottomSize;
+    Point * bottomHull = vectorInit(&bottomCap, &bottomSize);
+    int topCap, topSize;
+    Point * topHull = vectorInit(&topCap, &topSize);
+    // TODO : archive this function and implement a new one for single pass with non-blocking message passing
+    // TRAVERSE THE TOP
+    Point * oldPoints;
+    Point * currentPoints = NULL;
+    Point * nextPoints = myPoints;
+    unsigned int numPoints = myNumPoints;
+    unsigned int nextNumPoints = myNumPoints;
+    MPI_Request dataRequest;
+    for (int r = 0; r < numranks; ++r) {
+        // set the next set of points to work on, start a nonblocking recv for the next block
+        oldPoints = currentPoints;
+        currentPoints = nextPoints;
+        numPoints = nextNumPoints;
+        if (r + 1 < numranks) {
+            // get the next array
+            if (oldPoints) free(oldPoints);
+            MPI_Recv(&nextNumPoints, 1, MPI_UNSIGNED, r + 1, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            nextPoints = malloc(nextNumPoints * sizeof(Point));
+            MPI_Irecv(nextPoints, nextNumPoints, MPI_POINT, r + 1, 0,
+                 MPI_COMM_WORLD, &dataRequest);
+        }
+
+        for (int p = 0; p < numPoints; ++p) {
+            while (bottomSize >= 2 && cross(bottomHull[bottomSize - 2], bottomHull[bottomSize - 1], currentPoints[p]) <= 0) {
+                bottomHull = vectorPop(bottomHull, &bottomCap, &bottomSize);
+            }
+            bottomHull = vectorAdd(bottomHull, &bottomCap, &bottomSize, currentPoints[p]);
+
+            while (topSize >= 2 && cross(topHull[topSize - 2], topHull[topSize -1], currentPoints[p]) >= 0) {
+                topHull = vectorPop(topHull, &topCap, &topSize);
+            }
+            topHull = vectorAdd(topHull, &topCap, &topSize, currentPoints[p]);
+        }
+
+        if (r + 1 < numranks)
+            MPI_Wait(&dataRequest, MPI_STATUS_IGNORE);
+    }
+    reversePointsArray(topHull, topSize);
+    Point * concat = ConcatHulls(topHull, topSize, bottomHull, bottomSize, hullSize);
+
+    free(currentPoints);
     free(topHull);
     free(bottomHull);
     return concat;
@@ -239,12 +311,15 @@ void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank, int nu
     // send and block on small size
     MPI_Send(&numPoints, 1, MPI_UNSIGNED, LEAD_RANK, 0, MPI_COMM_WORLD);
     MPI_Send(myPoints, numPoints, MPI_POINT, LEAD_RANK, 0, MPI_COMM_WORLD);
-    MPI_Send(&numPoints, 1, MPI_UNSIGNED, LEAD_RANK, 0, MPI_COMM_WORLD);
-    MPI_Send(myPoints, numPoints, MPI_POINT, LEAD_RANK, 0, MPI_COMM_WORLD);
 }
 
-void outputHull(Point * hull, unsigned hullSize) {
-    printf("\n\nTHE CONVEX HULL IS:\n");
+void outputResults(Point * hull, unsigned hullSize, 
+    ticks startFromReadin, ticks startFromAlgo, ticks finishTime) {
+    printf("The time from file IO to end was %f\n", 
+        (double)(finishTime - startFromReadin) / CLOCK_RATE);
+    printf("The time from after file IO to end was %f\n", 
+        (double)(finishTime - startFromAlgo) / CLOCK_RATE);
+    printf("\nTHE CONVEX HULL IS:\n");
     for (int p = 0; p < hullSize; ++p) {
         printf("{%f, %f}\n", hull[p].x, hull[p].y);
     }
@@ -267,15 +342,16 @@ int main(int argc, char* argv[])
     if (1 != sscanf(argv[1], "%zu", &totlalPoints))
         return false;
     int oversampling = atoi(argv[3]);
-    printf("Number elements is %zu\n", totlalPoints);
+    if (myrank == LEAD_RANK)
+        printf("Number elements is %zu\n", totlalPoints);
     size_t numPoints = totlalPoints / numranks;
     // add stragglers to the last rank
     numPoints += ((numranks == myrank + 1) * (totlalPoints % numPoints));
 
-
     Point * points = malloc(numPoints * sizeof(Point));
+    ticks startFromReadin = getticks();
     readInData(argv[2], points, myrank, (totlalPoints / numranks) * sizeof(Point), numPoints);
-
+    ticks startFromAlgo = getticks();
     // get pivots
     Point * pivots = malloc(numranks * oversampling * sizeof(Point));
     Point * localPivots = malloc(oversampling * sizeof(Point));
@@ -318,6 +394,7 @@ int main(int argc, char* argv[])
     // sort my bin
     localSort(myREALPoints, total);
 
+#ifdef DEBUG
     for (int r = 0; r < numranks; ++r) {
         if (r == myrank) {
             for (int i = 0; i < total; ++i)
@@ -326,12 +403,15 @@ int main(int argc, char* argv[])
         MPI_Barrier(MPI_COMM_WORLD);
     }
     printf("\n");
+#endif
 
+    MPI_Barrier(MPI_COMM_WORLD);
     // perform the monotone chain
     if (myrank == LEAD_RANK) {
         unsigned int hullSize;
-        Point * hull = performHullContstruction(myREALPoints, total, numranks, &hullSize);
-        outputHull(hull, hullSize);
+        Point * hull = performHullContstruction2(myREALPoints, total, numranks, &hullSize);
+        ticks finishTime = getticks();
+        outputResults(hull, hullSize, startFromReadin, startFromAlgo, finishTime);
     } else {
         prepareToSendToLeadRank(myREALPoints, total, myrank, numranks);
     }
