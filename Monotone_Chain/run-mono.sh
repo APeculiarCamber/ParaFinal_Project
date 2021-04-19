@@ -7,3 +7,4 @@ sbatch -N $1 --ntasks-per-node=$2 --gres=gpu:4 -t 10 ./slurm_chain.sh $3 $4
 # For monotone chain's sample sorting, it splits the data into bins by randomly selecting pivots; <oversampling> specifies the amount 
 # of pivots per rank that should be used. Oversampling allows for more even distribution of bins. 
 # A value of like ~256 might be good, or you could linearly vary it with number of points per rank.
+ 
