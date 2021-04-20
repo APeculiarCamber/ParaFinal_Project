@@ -118,7 +118,6 @@ void vectorAdd(Vector * v, Point a) {
     int prevSize = sizeCap((*v).size);
     int newSize = sizeCap((*v).size + 1);
     (*v).size += 1;
-    
     if (newSize > prevSize) {
         (*v).pts = realloc((*v).pts, newSize * sizeof(Point));
     }
