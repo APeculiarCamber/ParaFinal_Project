@@ -22,7 +22,7 @@ struct Polar_vector{
 };
 
 struct Point_stack{
-	struct Point* stack
+	struct Point* stack;
 	int size;
 };
 
@@ -64,12 +64,10 @@ bool clockwise_turn(Point p1, Point p2, Point p3){
 	float slope_l1 = ((p2.y)-(p1.y))/((p2.x)-(p1.x));
 	float slope_l2 = ((p3.y)-(p2.y))/((p3.x)-(p2.x));
 
-	if (slope_l1 >= slope_l2){
-		return false;
-	}
-	else if(slope_l1 < slope_l2){
+	if (slope_l1 < slope_l2){
 		return true;
 	}
+	return false;
 }
 
 float orientation(Point p1, Point p2, Point p3){
@@ -127,31 +125,31 @@ void* add_to_polar_l(Polar_l* c_list){
 int item_exists(Polar_l exist_list, float angle){
 	int i;
 	for (i = 0; i < exist_list.size; i++){
-		if (angle == exist_list[i].angle){
+		if (angle == exist_list.polar_list[i].angle){
 			return i;
 		}
 	}
 	return -1;
 }
 
-int distance_compare(Point p1, Point p2, min_point){
-	float d1 = sqrt((p1.x-min_point.x)**2+(p1.y-min_point.y)**2)
-	float d2 = sqrt((p2.x-min_point.x)**2+(p2.y-min_point.y)**2)
+int distance_compare(Point p1, Point p2, Point min_point){
+	float d1 = sqrt(pow((p1.x-min_point.x),2)+pow((p1.y-min_point.y),2));
+	float d2 = sqrt(pow((p2.x-min_point.x),2)+pow((p2.y-min_point.y),2));
 
-	return d1-d2
+	return d1-d2;
 }
 
 Polar_l remove_repeat(Polar_l current_list, Point min_point){
 	Polar_l without_repeat;
 	int current_size = 8;
 
-	Polar_l without_repeat.polar_list = calloc(current_size, sizeof(Tuple));
+	without_repeat.polar_list = calloc(current_size, sizeof(Tuple));
 
 	int count = 0;
 	int i;
 	for (i = 0; i < current_list.size; i++){
 		Tuple current = current_list.polar_list[i];
-		int index = item_exists(current_size,angle);
+		int index = item_exists(without_repeat, current.angle);
 		if (index == -1){
 			count += 1;
 			if (count == current_size){
@@ -160,8 +158,8 @@ Polar_l remove_repeat(Polar_l current_list, Point min_point){
 			without_repeat.polar_list[count] = current;
 		}
 		else{
-			if (distance_compare(current.p, without_repeat[index].p, min_point) < 0){
-				without_repeat[index] = current;
+			if (distance_compare(current.p, without_repeat.polar_list[index].p, min_point) < 0){
+				without_repeat.polar_list[index].p = current.p;
 			}
 		}
 	}
@@ -169,21 +167,21 @@ Polar_l remove_repeat(Polar_l current_list, Point min_point){
 }
 
 int compare (const void *a, const void * b){
-	Tuple *tupleA = (Tuple *a);
-	Tuple *tupleB = (Tuple *b);
+	Tuple *tupleA = (Tuple *)a;
+	Tuple *tupleB = (Tuple *)b;
 
 	return (tupleA->angle - tupleB->angle);
 }
 
-void pop_from_stack(Point* point_stack){
-	hull->size = size-1;
+void pop_from_stack(Polar_s* ps){
+	ps->size = ps->size-1;
 	Point empty;
-	hull[size] = empty;
+	ps->stack[ps->size] = empty;
 }
 
-void add_to_stack(Point* point_stack, Point new_point, int current_size){
-	hull->size = size+1;
-	hull[size-1] = new_point;
+void add_to_stack(Polar_s* ps, Point new_point, int current_size){
+	ps->size = ps->size+1;
+	ps->stack[ps->size-1] = new_point;
 }
 
 Polar_s Perform_Graham(Point* point_set, int set_size){
@@ -198,31 +196,32 @@ Polar_s Perform_Graham(Point* point_set, int set_size){
 
 	int i;
 	for (i = 3; i < set_size; i++){
-		prev = point_set[i-1];
-		curr = point_set[i];
-		next = point_set[i+1];
+		Point prev = point_set[i-1];
+		Point curr = point_set[i];
+		Point next = point_set[i+1];
 		bool right_turn = clockwise_turn(prev, curr, next);
 		if (right_turn == false){
 			if (hull.size == current_size){
 				current_size = current_size*2;
 				realloc(hull.stack, current_size*sizeof(Polar_s));
 			}
-			add_to_stack(&hull, next);
+			add_to_stack(&hull, next, hull.size);
 		}
 		else{
-			while (right_turn(prev,curr,next) == true){
+			while (right_turn == true){
 				pop_from_stack(&hull);
 				int current = hull.size-1;
 				curr = hull.stack[current];
 				prev = hull.stack[current-1];
+				right_turn = clockwise_turn(prev, curr, next);
 			}
-			add_to_stack(&hull, next);
+			add_to_stack(&hull, next, hull.size);
 		}
 	}
 	return hull;
 }
 
-Point* perform_chan(Point_set* hull_set, Point min_point, int m){
+Point* perform_chan(Point* hull_set, Point min_point, int m){
 	int current_size = 8;
 	Point* final = calloc(current_size, sizeof(Point));
 
@@ -237,35 +236,35 @@ Point* perform_chan(Point_set* hull_set, Point min_point, int m){
 	float max_orientation = 0;
 	Point max_point;
 	for (i = 0 ; i < m; i++){
-		Point current = hull_set[i]
+		Point current = hull_set[i];
 		if (count == 1){
-			float curr_orientation = orientation(initial, p1, current);
+			float curr_orientation = orientation(initial, min_point, current);
 			if (curr_orientation > max_orientation){
 				max_point = current;
 			}
 		}
 	}
 
-	final[count] = current;
+	final[count] = max_point;
 	count = count+1;
 
-	while(max_point != final[0]){
-		Point max_point
+	while(max_point.x != final[0].x && max_point.y != final[0].y){
+		Point max_point;
 		for (i = 0 ; i < m; i++){
-			Point current = hull_set[i]
+			Point current = hull_set[i];
 			if (count == 1){
-				float curr_orientation = orientation(initial, p1, current);
+				float curr_orientation = orientation(final[i-1], final[i], current);
 				if (curr_orientation > max_orientation){
 					max_point = current;
 				}
 			}
 		}
-		count = count+1
+		count = count+1;
 		if (count == current_size){
-			current_size = current_size*2
+			current_size = current_size*2;
 			realloc(final, current_size*sizeof(Polar_s));
 		}
-		final[count] = max_point;
+		final[count] = max_point;	
 	}
 
 	return final;
@@ -301,21 +300,27 @@ int main(int argc, char*argv[]){
 
 	Polar_l p_points = polar_points(points, numPoints, min_point);
 
-	qsort(p_points, numPoints-1, Tuple, compare);
+	qsort(&p_points.polar_list, numPoints-1, sizeof(Tuple), compare);
 
 	Polar_l final_polar_set = remove_repeat(p_points, min_point);
 
 	if (final_polar_set.size < 3){
-		return 0
+		return 0;
 	}
 
 	Point* final_point_set = calloc(final_polar_set.size, sizeof(Point));
 	int i;
-	for (i = 0; i < final_set.size; i++){
-		final_point_set[i] = final_polar_set.polar_list[i];
+	for (i = 0; i < final_polar_set.size; i++){
+		final_point_set[i] = final_polar_set.polar_list[i].p;
 	}
 
 	Polar_s hull = Perform_Graham(final_point_set, final_polar_set.size);
+
+	Point* set = calloc(hull.size, sizeof(Point));
+
+	for (i = 0; i < hull.size; i++){
+		set[i] = hull.stack[i];
+	}
 
 	return 0;
 }
