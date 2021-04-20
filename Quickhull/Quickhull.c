@@ -83,10 +83,18 @@ void readInData(char * fileName, Vector points,
     ensureReturnCode(rc, "closing file");
 }
 
+// returns the upper bound number from size given that
+// the return value is a power of 2.
+int sizeCap(int size) {
+    int pref_size = pow(2, (int) (log(size)/log(2) + 1));
+    int min_size = 16;
+    return min_size < pref_size ? pref_size : min_size;
+}
+
 Vector vectorInit(int size) {
     Vector v;
     v.size = size;
-    v.pts = malloc(size * sizeof(Point));
+    v.pts = calloc(sizeCap(size), sizeof(Point));
     return v;
 }
 
@@ -107,15 +115,20 @@ Point vectorPop(Vector * v) {
 }
 
 void vectorAdd(Vector * v, Point a) {
+    int prevSize = sizeCap((*v).size);
+    int newSize = sizeCap((*v).size + 1);
     (*v).size += 1;
-    (*v).pts = realloc((*v).pts, (*v).size * sizeof(Point));
+    
+    if (newSize > prevSize) {
+        (*v).pts = realloc((*v).pts, newSize * sizeof(Point));
+    }
     (*v).pts[(*v).size - 1] = a;
 }
 
 Vector concatHulls(Vector p1, Vector p2) {
     Vector concat;
     concat.size = p1.size + p2.size;
-    concat.pts = malloc((concat.size) * sizeof(Point));
+    concat.pts = calloc(sizeCap(concat.size), sizeof(Point));
     for (int p = 0; p < p1.size; ++p)
         concat.pts[p] = p1.pts[p];
     for (int p = 0; p < p2.size; ++p)
@@ -255,9 +268,8 @@ void reduceDist(DistPoint * p, int len) {
 }
 
 void outputHull(Vector hull) {
-    printf("\n\nTHE CONVEX HULL IS:\n");
     for (int p = 0; p < hull.size; ++p) {
-        printf("{%.2f, %.2f}\n", hull.pts[p].x, hull.pts[p].y);
+        printf("%.2f, %.2f\n", hull.pts[p].x, hull.pts[p].y);
     }
 }
 
@@ -289,11 +301,10 @@ int main(int argc, char* argv[])
         numPoints += totalPoints % numPoints;
     }
     Vector points = vectorInit(numPoints);
-    readInData(argv[2], points, myrank, (totalPoints / numranks) * sizeof(Point));
+    readInData(argv[2], points, myrank, totalPoints / numranks);
 
     Point l = min(points);
     Point r = max(points);
-    printf("RANK %d | GOT %d PTS, MIN: {%.2f, %.2f} MAX: {%.2f, %.2f}\n", myrank,numPoints,l.x,l.y,r.x,r.y);
     l = reduceMin(l);
     r = reduceMax(r);
 
@@ -301,17 +312,23 @@ int main(int argc, char* argv[])
     hull.pts[0] = l;
     hull.pts[1] = r;
 
+    // if (myrank == 0) {
+    //     printf("\tNew hull point: {%.2f, %.2f}\n", l.x, l.y);
+    //     printf("\tNew hull point: {%.2f, %.2f}\n", r.x, r.y);
+    // }
+
     Vector ls = vectorInit(0);
     Vector rs = vectorInit(0);
 
+    // if (myrank == 0) {
+    //     printf("USING POINTS:\n");
+    // }
+    // MPI_Barrier(MPI_COMM_WORLD);
+    // outputHull(points);
+    // MPI_Barrier(MPI_COMM_WORLD);
+
     partition_set(points, &ls, &rs, l, r);
     freeVector(points);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (myrank == 0) {
-        printf("First partition completed with {%.2f, %.2f} and {%.2f, %.2f}\n", l.x,l.y,r.x,r.y);
-    }
 
     HullParams * point_sets = calloc(2, sizeof(HullParams));
     point_sets[0].points = ls;
@@ -366,20 +383,8 @@ int main(int argc, char* argv[])
         int act_result = 0;
         MPI_Allreduce(&active, &act_result, 1, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
         active = act_result;
-        if (active == 1 && myrank == 0) {
-            printf("Consensus: continue to %d\n", i+ 1);
-        }
         // perform reduction to find largest dist point
         reduceDist(max_pts, prev_size);
-        // dpts[max_ind] = reduceDist(dpts[max_ind]);
-        if (myrank == 0) {
-            printf("Carrying on with: \n");
-            for (int p = 0; p < prev_size; ++p) {
-                if (max_pts[p].dist > 0) {
-                    printf("{%f, %f}\n", max_pts[p].x, max_pts[p].y);
-                }
-            }
-        }
         
         for (int j=0; j<prev_size; j++) {
             Vector pts = point_sets[j].points;
@@ -392,7 +397,7 @@ int main(int argc, char* argv[])
             c.y = max_pts[j].y;
 
             if (myrank == 0 && max_pts[j].dist > 0) {
-                printf(" RANK 0 | Got max %d {%.2f, %.2f}\n", prev_size + j, c.x, c.y);
+                printf("\tNew hull point: {%.2f, %.2f}\n", c.x, c.y);
                 vectorAdd(&hull, c);
             }
             if (num_pts == 0 || pts.pts == NULL) {
@@ -429,6 +434,7 @@ int main(int argc, char* argv[])
         i++;
     }
     if (myrank == 0) {
+        printf("\n\nTHE CONVEX HULL IS:\n");
         outputHull(hull);
     }
     MPI_Barrier(MPI_COMM_WORLD);

@@ -43,5 +43,5 @@ if __name__=="__main__":
 	matplotlib.pyplot.scatter(points[0], points[1]) 
 	# plot hull
 	hull = readInHull(sys.argv[2])
-	matplotlib.pyplot.plot(hull[0], hull[1], linestyle='solid', color='blue')
+	matplotlib.pyplot.scatter(hull[0], hull[1], color='red')
 	matplotlib.pyplot.show()

@@ -20,6 +20,6 @@ mv /tmp/tmp.$SLURM_JOB_ID /tmp/hosts.$SLURM_JOB_ID
 
 module load spectrum-mpi
 taskset --cpu-list 0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100,104,108,112,116,120,124\
- mpirun --bind-to core --report-bindings -hostfile /tmp/hosts.$SLURM_JOB_ID -np $SLURM_NPROCS ./quickhull 128 points.bin
+ mpirun --bind-to core --report-bindings -hostfile /tmp/hosts.$SLURM_JOB_ID -np $SLURM_NPROCS ./quickhull $1 points.bin
 
 rm /tmp/hosts.$SLURM_JOB_ID
