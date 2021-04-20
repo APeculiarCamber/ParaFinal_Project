@@ -35,7 +35,7 @@ void readInData(char* fName, Point * points, int myrank, size_t stride, size_t n
 	MPI_File mpiFile;
 	MPI_Status stat;
 	int rc = MPI_File_open(MPI_COMM_WORLD, fName, MPI_MODE_RDONLY, MPI_INFO_NULL, &mpiFile);
-	rc = MPI_File_read_at(mpiFile, (myrank*stride)*2, points, numPoints*2, MPI_FLOAT, &stat);
+	rc = MPI_File_read_at(mpiFile, (myrank*stride), points, numPoints, MPI_FLOAT, &stat);
 	rc = MPI_File_close(&mpiFile);
 }
 
@@ -51,13 +51,21 @@ void createPointType(){
 	MPI_Type_commit(&MPI_POINT);
 }
 
-void createSamples(Point* points, int num_sets,Point ** point_set){
+void createSamples(Point* points, int num_sets,Point *** point_set, int num_points){
 	//TODO: create a sample of points through this
 	/*
 	Pseudo code
 	Randomly pick group of points
 
 	*/
+	*point_set = calloc(num_sets, sizeof(Point*));
+
+	int size_of_points = num_points/num_sets;
+
+	int i = 0;
+	for (int i = 0; i < num_sets; i++){
+		*point_set[i] = points+size_of_points*i;
+	}
 }
 
 bool clockwise_turn(Point p1, Point p2, Point p3){
@@ -295,6 +303,24 @@ int main(int argc, char*argv[]){
 
 	Point * points = malloc(numPoints * sizeof(Point));
 	readInData(argv[2], points, myrank, (totalPoints/numranks)*sizeof(Point), numPoints);
+
+	Point** point_set;
+
+	int num_sets = 4;
+
+	createSamples(points, num_sets, &point_set, numPoints);
+
+	int i;
+
+	int size_per_set = numPoints/num_sets;
+
+	for (i = 0; i < num_sets; i++){
+		int j;
+		for (j = 0; j < size_per_set; j++){
+			Point curr_point = point_set[i][j];
+			printf("point set %d, x is %f, y is %f\n", i, curr_point.x, curr_point.y);
+		}
+	}
 
 	Point min_point = bottom_left(points, numPoints);
 
