@@ -351,7 +351,8 @@ int main(int argc, char* argv[])
         return false;
     unsigned oversampling = atoi(argv[3]);
     if (myrank == LEAD_RANK)
-        printf("Number of points is %zu\n", totalPoints);
+        printf("*Number of points is %zu run over %d ranks with %d oversampling.\n",
+         totalPoints, numranks, oversampling);
     size_t numPoints = totalPoints / numranks;
     // add stragglers to the last rank
     numPoints += ((numranks == myrank + 1) * (totalPoints % numPoints));

@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
     float lowerY = atof(argv[4]);
     float rightX = atof(argv[5]);
     float upperY = atof(argv[6]);
-    char sampleCircle = argv >= 8;
+    char sampleCircle = argc >= 8;
     printf("Number elements for rank %d is %zu with %d threads.\n", myrank, numPoints, threadsCount);
     
     Point * p_data;
