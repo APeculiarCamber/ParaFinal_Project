@@ -17,7 +17,26 @@ typedef struct Point Point;
 __global__ void data_kernel(Point* p_data, size_t numPoints, int seed,
     float leftX, float lowerY, float rightX, float upperY) {
 
-    curandState_t state; // TODO : better setting of seed
+    curandState_t state;
+    curand_init (seed + (128 * blockIdx.x) + (60000 * threadIdx.x), 0, 0, &state);
+    float sizeX = rightX - leftX;
+    float sizeY = upperY - lowerY;
+
+    size_t index = blockIdx.x * blockDim.x + threadIdx.x;
+    float x, y;
+    while (index < numPoints) {
+        x = curand_uniform (&state);
+        y = curand_uniform (&state);
+        p_data[index].x = (x * sizeX) + leftX;
+        p_data[index].y = (y * sizeY) + lowerY;
+        index += blockDim.x * gridDim.x;
+    }
+}
+// LOCAL
+__global__ void data_circle_kernel(Point* p_data, size_t numPoints, int seed,
+    float leftX, float lowerY, float rightX, float upperY) {
+
+    curandState_t state;
     curand_init (seed + (128 * blockIdx.x) + (60000 * threadIdx.x), 0, 0, &state);
     float sizeX = rightX - leftX;
     float sizeY = upperY - lowerY;
@@ -91,6 +110,13 @@ void freeCudaMemory(Point * pts) {
 void c_callKernel(int numBlocks, int threadsCount, Point * p_data, size_t numPoints, int seed,
         float leftX, float lowerY, float rightX, float upperY) {
     data_kernel<<<numBlocks, threadsCount>>>(p_data, numPoints, seed,
+        leftX, lowerY, rightX, upperY);
+    cudaDeviceSynchronize();
+}
+
+void c_callCircleKernel(int numBlocks, int threadsCount, Point * p_data, size_t numPoints, int seed,
+        float leftX, float lowerY, float rightX, float upperY) {
+    data_circle_kernel<<<numBlocks, threadsCount>>>(p_data, numPoints, seed,
         leftX, lowerY, rightX, upperY);
     cudaDeviceSynchronize();
 }
