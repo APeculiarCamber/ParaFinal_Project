@@ -83,7 +83,6 @@ void readFromMPIFile(int myrank, int numranks, int numPoints) {
     }
 }
 
-// TODO : add MPI and parallel file processing for even larger files
 int main(int argc, char* argv[])
 {
     int myrank, numranks;
@@ -106,6 +105,7 @@ int main(int argc, char* argv[])
     float lowerY = atof(argv[4]);
     float rightX = atof(argv[5]);
     float upperY = atof(argv[6]);
+    char sampleCircle = argc >= 8;
     printf("Number elements for rank %d is %zu with %d threads.\n", myrank, numPoints, threadsCount);
     
     Point * p_data;

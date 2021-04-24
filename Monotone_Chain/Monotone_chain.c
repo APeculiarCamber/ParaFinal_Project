@@ -321,9 +321,8 @@ Point * makeAndExchangeByPivots(Point * points, unsigned numPoints, unsigned ove
     }
 
     Point * myREALPoints = malloc(total * sizeof(Point));
-#ifdef DEBUG
     printf("Rank %d's bin size is %lu\n", myrank, total);
-#endif
+
     MPI_Alltoallv(bins, sizes, steps, MPI_POINT, myREALPoints,
                   allMyBinSizes, allMyBinDispl, MPI_POINT, MPI_COMM_WORLD);
     free(steps); free(sizes); free(bins);
@@ -352,7 +351,8 @@ int main(int argc, char* argv[])
         return false;
     unsigned oversampling = atoi(argv[3]);
     if (myrank == LEAD_RANK)
-        printf("Number elements is %zu\n", totalPoints);
+        printf("*Number of points is %zu run over %d ranks with %d oversampling.\n",
+         totalPoints, numranks, oversampling);
     size_t numPoints = totalPoints / numranks;
     // add stragglers to the last rank
     numPoints += ((numranks == myrank + 1) * (totalPoints % numPoints));
