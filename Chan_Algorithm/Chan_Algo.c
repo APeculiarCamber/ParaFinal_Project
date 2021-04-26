@@ -28,10 +28,16 @@ struct Point_stack{
 	int count;
 };
 
+struct retType{
+	struct Point* final;
+	int count;
+};
+
 typedef struct Tuple Tuple;
 typedef struct Polar_vector Polar_l;
 typedef struct Point_stack Polar_s;
 typedef struct Point Point;
+typedef struct retType retType;
 typedef unsigned long long ticks;
 
 static __inline__ ticks getticks(void){
@@ -247,15 +253,17 @@ Polar_s Perform_Graham(Point* point_set, int set_size){
 	return hull;
 }
 
-Point* perform_chan(Point* hull_set, Point min_point, int m){
+retType perform_chan(Point* hull_set, Point min_point, int m){
 	int current_size = 8;
-	Point* final = calloc(current_size, sizeof(Point));
+	retType final;
+
+	final.final = calloc(current_size, sizeof(Point));
 
 	Point initial;
 	initial.x = -INFINITY;
 	initial.y = 0;
 
-	final[0] = min_point;
+	final.final[0] = min_point;
 
 	int i;
 	int count = 1;
@@ -271,26 +279,27 @@ Point* perform_chan(Point* hull_set, Point min_point, int m){
 		}
 	}
 
-	final[count] = max_point;
-	count = count+1;
+	final.final[count] = max_point;
+	//count = count+1;
 
-	while(max_point.x != final[0].x && max_point.y != final[0].y){
+	final.count = 1;
+
+	while(max_point.x != final.final[0].x && max_point.y != final.final[0].y){
 		Point max_point;
 		for (i = 0 ; i < m; i++){
 			Point current = hull_set[i];
-			if (count == 1){
-				float curr_orientation = orientation(final[i-1], final[i], current);
-				if (curr_orientation > max_orientation){
-					max_point = current;
-				}
+			float curr_orientation = orientation(final.final[i-1], final.final[i], current);
+			if (curr_orientation > max_orientation){
+				max_point = current;
 			}
 		}
 		count = count+1;
+		final.count = final.count+1;
 		if (count == current_size){
 			current_size = current_size*2;
-			realloc(final, current_size*sizeof(Polar_s));
+			realloc(final.final, current_size*sizeof(Polar_s));
 		}
-		final[count] = max_point;	
+		final.final[count] = max_point;	
 	}
 
 	return final;
@@ -345,11 +354,44 @@ int main(int argc, char*argv[]){
 
 	Polar_s hull = Perform_Graham(final_point_set, final_polar_set.size);
 
+	int final_size = 0;
+
 	Point* set = calloc(hull.size, sizeof(Point));
 
 	for (i = 0; i < hull.size; i++){
 		printf("outer hull is x:%f, y:%f, rank is %d\n", hull.stack[i].x, hull.stack[i].y, myrank);
 		set[i] = hull.stack[i];
 	}
+
+	//MPI_Reduce(&hull.size, &final_size, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	Point* hull_gather = calloc(final_size, sizeof(Point));
+
+	int* hull_sizes = calloc(numranks, sizeof(int));
+
+	MPI_Gather(&hull.size, 1, MPI_INT, hull_sizes, numranks, MPI_INT, 0, MPI_COMM_WORLD);
+
+	int* disp_array = calloc(numranks, sizeof(int));
+
+	for (int i = 0; i < numranks; i++){
+		int sum = 0;
+		for (int j = 0; j < i; j++){
+			sum = sum+hull_sizes[j];
+		}
+		disp_array[i] = sum;
+	}
+
+	MPI_Gatherv(set, hull.size, MPI_POINT, hull_gather, hull_sizes, disp_array, MPI_POINT, 0, MPI_COMM_WORLD);
+
+	if (myrank == 0){
+		Point bottom_point = bottom_left(hull_gather, final_size);
+
+		retType final_hull = perform_chan(hull_gather, bottom_point, final_size);
+
+		for (int i = 0; i < final_hull.count; i++){
+			printf("final hull is x:%f, y:%f", final_hull.final[i].x, final_hull.final[i].y);
+		}
+	}
+
 	return 0;
 }
