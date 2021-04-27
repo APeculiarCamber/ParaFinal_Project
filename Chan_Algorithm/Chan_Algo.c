@@ -325,9 +325,11 @@ int main(int argc, char*argv[]){
 
 	int i;
 
+	/*
 	for (i = 0; i < numPoints; i++){
 		printf("point is %f, %f, rank is %d\n", points[i].x, points[i].y, myrank);
 	}
+	*/
 
 	Point min_point = bottom_left(points, numPoints);
 
@@ -337,15 +339,15 @@ int main(int argc, char*argv[]){
 
 	Polar_l final_polar_set = remove_repeat(p_points, min_point, numPoints);
 
-	printf("size of final set is %d\n", final_polar_set.size);
+	//printf("size of final set is %d\n", final_polar_set.size);
 	
 	if (final_polar_set.size < 3){
 		return 0;
 	}
 
-	for (i = 0; i < final_polar_set.count; i++){
-		printf("%d final point is %f, %f, rank is %d\n", i, final_polar_set.polar_list[i].p.x, final_polar_set.polar_list[i].p.y, myrank);
-	}
+	//for (i = 0; i < final_polar_set.count; i++){
+	//	printf("%d final point is %f, %f, rank is %d\n", i, final_polar_set.polar_list[i].p.x, final_polar_set.polar_list[i].p.y, myrank);
+	//}
 
 	Point* final_point_set = calloc(final_polar_set.size, sizeof(Point));
 	for (i = 0; i < final_polar_set.count; i++){
@@ -359,17 +361,19 @@ int main(int argc, char*argv[]){
 	Point* set = calloc(hull.size, sizeof(Point));
 
 	for (i = 0; i < hull.size; i++){
-		printf("outer hull is x:%f, y:%f, rank is %d\n", hull.stack[i].x, hull.stack[i].y, myrank);
+		//printf("outer hull is x:%f, y:%f, rank is %d\n", hull.stack[i].x, hull.stack[i].y, myrank);
 		set[i] = hull.stack[i];
 	}
 
 	//MPI_Reduce(&hull.size, &final_size, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-	Point* hull_gather = calloc(final_size, sizeof(Point));
-
 	int* hull_sizes = calloc(numranks, sizeof(int));
 
 	MPI_Gather(&hull.size, 1, MPI_INT, hull_sizes, numranks, MPI_INT, 0, MPI_COMM_WORLD);
+
+	for (i = 0; i < numranks; i++){
+		final_size = final_size+hull_sizes[i];
+	}
 
 	int* disp_array = calloc(numranks, sizeof(int));
 
@@ -381,16 +385,30 @@ int main(int argc, char*argv[]){
 		disp_array[i] = sum;
 	}
 
+	Point* hull_gather = calloc(final_size, sizeof(Point));
+
 	MPI_Gatherv(set, hull.size, MPI_POINT, hull_gather, hull_sizes, disp_array, MPI_POINT, 0, MPI_COMM_WORLD);
 
 	if (myrank == 0){
+		int final_size = 0;
+
+		/*
+		for (i = 0; i < final_size; i++){
+			printf("point is x: %f, y:%f\n", hull_gather[i].x, hull_gather[i].y);
+		}
+	
+		printf("final_size is %d\n", final_size);
+		*/
+
 		Point bottom_point = bottom_left(hull_gather, final_size);
 
 		retType final_hull = perform_chan(hull_gather, bottom_point, final_size);
 
+		/*
 		for (int i = 0; i < final_hull.count; i++){
 			printf("final hull is x:%f, y:%f", final_hull.final[i].x, final_hull.final[i].y);
 		}
+		*/
 	}
 
 	return 0;
