@@ -53,15 +53,26 @@ void ensureReturnCode(int rc, char* point) {
 
 // read in this MPI rank's chunk of the data
 void readInData(char * fileName, Point * points, 
-    int myrank, size_t stride, size_t numPoints) {
+    int myrank, size_t stride, int numPoints) {
     MPI_File mpiFile;
     MPI_Status stat;
 
     int rc = MPI_File_open(MPI_COMM_WORLD, fileName, 
         MPI_MODE_RDONLY, MPI_INFO_NULL, &mpiFile);
     ensureReturnCode(rc, "opening file");
+    // TODO : problem with reading 268435456
+    if (numPoints == 268435456) {
     rc = MPI_File_read_at(mpiFile, (myrank * stride), points,
+                  (numPoints / 2), MPI_POINT, &stat);
+    ensureReturnCode(rc, "reading file");
+    rc = MPI_File_read_at(mpiFile, 
+        (myrank * stride) + ((numPoints / 2) * sizeof(Point)), 
+        points + (numPoints / 2),
+        (numPoints / 2), MPI_POINT, &stat);
+    } else {
+        rc = MPI_File_read_at(mpiFile, (myrank * stride), points,
                   numPoints, MPI_POINT, &stat);
+    }
     ensureReturnCode(rc, "reading file");
     rc = MPI_File_close(&mpiFile);
     ensureReturnCode(rc, "closing file");
@@ -262,11 +273,12 @@ void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank, int nu
 
 // Output times and results, store results in a file
 void outputResults(Point * hull, unsigned hullSize, 
-    ticks startFromReadin, ticks startFromAlgo, ticks finishTime) {
-    printf("The time from file IO to end was %f\n", 
-        (double)(finishTime - startFromReadin) / CLOCK_RATE);
-    printf("The time from after file IO to end was %f\n", 
-        (double)(finishTime - startFromAlgo) / CLOCK_RATE);
+    ticks startFromReadin, ticks startFromAlgo, ticks finishTime, int numranks,
+    size_t totalPoints) {
+    printf("The time from file IO to end was %f for %d ranks for %zu total points.\n", 
+        (double)(finishTime - startFromReadin) / CLOCK_RATE, numranks, totalPoints);
+    printf("The time from after file IO to end was %f for %d ranks for %zu total points..\n", 
+        (double)(finishTime - startFromAlgo) / CLOCK_RATE, numranks, totalPoints);
 
     // write hull to file
     FILE *f = fopen("mono_hull_results.bin", "wb");
@@ -388,7 +400,7 @@ int main(int argc, char* argv[])
         unsigned int hullSize;
         Point * hull = performHullContstruction(myREALPoints, total, numranks, &hullSize);
         ticks finishTime = getticks();
-        outputResults(hull, hullSize, startFromReadin, startFromAlgo, finishTime);
+        outputResults(hull, hullSize, startFromReadin, startFromAlgo, finishTime, numranks, totalPoints);
     } else {
         prepareToSendToLeadRank(myREALPoints, total, myrank, numranks);
     }
