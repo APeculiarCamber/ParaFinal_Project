@@ -390,15 +390,13 @@ int main(int argc, char*argv[]){
 	MPI_Gatherv(set, hull.size, MPI_POINT, hull_gather, hull_sizes, disp_array, MPI_POINT, 0, MPI_COMM_WORLD);
 
 	if (myrank == 0){
-		int final_size = 0;
 
-		/*
 		for (i = 0; i < final_size; i++){
 			printf("point is x: %f, y:%f\n", hull_gather[i].x, hull_gather[i].y);
 		}
 	
 		printf("final_size is %d\n", final_size);
-		*/
+		
 
 		Point bottom_point = bottom_left(hull_gather, final_size);
 
