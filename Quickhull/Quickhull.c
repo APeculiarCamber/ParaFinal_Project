@@ -9,6 +9,9 @@
 #define LEAD_RANK 0
 #define STARTING_VECTOR_SIZE 64
 
+int myrank;
+int numranks;
+
 typedef struct Point {
     float x;
     float y;
@@ -16,8 +19,8 @@ typedef struct Point {
 
 typedef struct Vector {
     Point * pts;
-    int size;
-    int cap;
+    size_t size;
+    size_t cap;
 } Vector;
 
 typedef struct DistPoint {
@@ -34,7 +37,11 @@ typedef struct HullParams {
 
 void ensureReturnCode(int rc, char* point) {
     if (rc != MPI_SUCCESS) {
+        char* message;
+        int len;
+        MPI_Error_string(rc, message, &len);
         printf("An error (%d) occured when %s\n", rc, point);
+        printf("Message: %s\n", message);
         exit(-1);
     }
 }
@@ -76,7 +83,7 @@ void readInData(char * fileName, Vector points,
     int rc = MPI_File_open(MPI_COMM_WORLD, fileName, 
         MPI_MODE_RDONLY, MPI_INFO_NULL, &mpiFile);
     ensureReturnCode(rc, "opening file");
-    rc = MPI_File_read_at(mpiFile, sizeof(Point) * (myrank * stride), points.pts,
+    rc = MPI_File_read_at(mpiFile, sizeof(Point) * myrank * stride, points.pts,
                   points.size, MPI_POINT, &stat);
     ensureReturnCode(rc, "reading file");
     rc = MPI_File_close(&mpiFile);
@@ -85,21 +92,25 @@ void readInData(char * fileName, Vector points,
 
 // returns the upper bound number from size given that
 // the return value is a power of 2.
-int sizeCap(int size) {
-    int pref_size = pow(2, (int) (log(size)/log(2) + 1));
-    int min_size = 16;
+int sizeCap(size_t size) {
+    size_t pref_size = pow(2, (int) (log(size)/log(2) + 1));
+    size_t min_size = 16;
     return min_size < pref_size ? pref_size : min_size;
 }
 
-Vector vectorInit(int size) {
+Vector vectorInit(size_t size) {
     Vector v;
     v.size = size;
+    v.cap = sizeCap(size);
     v.pts = calloc(sizeCap(size), sizeof(Point));
+    if (v.pts == NULL) {
+        perror("COULD NOT ALLOC MEMORY SIZE");
+    }
     return v;
 }
 
 void printVector(Vector v) {
-    for (int i=0; i<v.size; i++) {
+    for (size_t i=0; i<v.size; i++) {
         printf("\tPoint: %f, %f\n", v.pts[i].x, v.pts[i].y);
     }
 }
@@ -115,29 +126,35 @@ Point vectorPop(Vector * v) {
 }
 
 void vectorAdd(Vector * v, Point a) {
-    int prevSize = sizeCap((*v).size);
-    int newSize = sizeCap((*v).size + 1);
+    size_t newSize = sizeCap((*v).cap + 1);
     (*v).size += 1;
-    if (newSize > prevSize) {
-        (*v).pts = realloc((*v).pts, newSize * sizeof(Point));
+    if ((*v).cap <= (*v).size) {
+        Point * new_pts = realloc((*v).pts, newSize * sizeof(Point));
+        if (new_pts != NULL) {
+            (*v).pts = new_pts;
+            (*v).cap = newSize;
+        } else {
+            perror("COULD NOT ALLOC MEMORY SIZE");
+        }
     }
     (*v).pts[(*v).size - 1] = a;
 }
 
-Vector concatHulls(Vector p1, Vector p2) {
-    Vector concat;
-    concat.size = p1.size + p2.size;
-    concat.pts = calloc(sizeCap(concat.size), sizeof(Point));
-    for (int p = 0; p < p1.size; ++p)
-        concat.pts[p] = p1.pts[p];
-    for (int p = 0; p < p2.size; ++p)
-        concat.pts[p + p1.size] = p2.pts[p];
+// Vector concatHulls(Vector p1, Vector p2) {
+//     Vector concat;
+//     concat.size = p1.size + p2.size;
+//     concat.pts = calloc(sizeCap(concat.size), sizeof(Point));
 
-    freeVector(p1);
-    freeVector(p2);
+//     for (int p = 0; p < p1.size; ++p)
+//         concat.pts[p] = p1.pts[p];
+//     for (int p = 0; p < p2.size; ++p)
+//         concat.pts[p + p1.size] = p2.pts[p];
 
-    return concat;
-}
+//     freeVector(p1);
+//     freeVector(p2);
+
+//     return concat;
+// }
 
 float dist(Point a, Point b, Point c) {
     float tp = (c.x - b.x) * (b.y - a.y) - (b.x - a.x) * (c.y - b.y);
@@ -157,7 +174,7 @@ bool side(Point n, Point a, Point b) {
 
 Point max(Vector v) {
     Point m = v.pts[0];
-    for (int i = 1; i < v.size; i++) {
+    for (size_t i = 1; i < v.size; i++) {
         Point cmp = v.pts[i];
         if (cmp.x > m.x || (cmp.x == m.x && cmp.y > m.y)) {
             m = cmp;
@@ -168,7 +185,7 @@ Point max(Vector v) {
 
 Point min(Vector v) {
     Point m = v.pts[0];
-    for (int i = 1; i < v.size; i++) {
+    for (size_t i = 1; i < v.size; i++) {
         Point cmp = v.pts[i];
         if (cmp.x < m.x || (cmp.x == m.x && cmp.y < m.y)) {
             m = cmp;
@@ -177,13 +194,13 @@ Point min(Vector v) {
     return m;
 }
 
-void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank, int numranks) {
-    // send and block on small size
-    MPI_Send(&numPoints, 1, MPI_UNSIGNED, LEAD_RANK, 0, MPI_COMM_WORLD);
-    MPI_Send(myPoints, numPoints, MPI_POINT, LEAD_RANK, 0, MPI_COMM_WORLD);
-    MPI_Send(&numPoints, 1, MPI_UNSIGNED, LEAD_RANK, 0, MPI_COMM_WORLD);
-    MPI_Send(myPoints, numPoints, MPI_POINT, LEAD_RANK, 0, MPI_COMM_WORLD);
-}
+// void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank, int numranks) {
+//     // send and block on small size
+//     MPI_Send(&numPoints, 1, MPI_UNSIGNED, LEAD_RANK, 0, MPI_COMM_WORLD);
+//     MPI_Send(myPoints, numPoints, MPI_POINT, LEAD_RANK, 0, MPI_COMM_WORLD);
+//     MPI_Send(&numPoints, 1, MPI_UNSIGNED, LEAD_RANK, 0, MPI_COMM_WORLD);
+//     MPI_Send(myPoints, numPoints, MPI_POINT, LEAD_RANK, 0, MPI_COMM_WORLD);
+// }
 
 void mpi_max_func(void* inv, void* inoutv, int* len, MPI_Datatype* datatype) {
     Point* in = (Point*) inv;
@@ -216,28 +233,28 @@ void mpi_min_func(void* inv, void* inoutv, int* len, MPI_Datatype* datatype) {
 }
 
 void partition_set(Vector orig, Vector * a_v, Vector * b_v, Point a, Point b) {
-    for (int i=0; i<orig.size; i++) {
-        Point pt = orig.pts[i];
-        if (!same(pt, a) && !same(pt, b)) {
-            if (side(pt, a, b)) {
-                vectorAdd(a_v, pt);
+    Point * pt = orig.pts;
+    for (size_t i=0; i<orig.size; i++, pt++) {
+        if (!same(*pt, a) && !same(*pt, b)) {
+            if (side(*pt, a, b)) {
+                vectorAdd(a_v, *pt);
             } else {
-                vectorAdd(b_v, pt);
+                vectorAdd(b_v, *pt);
             }
         }  
     }
 }
 
-void filter_set(Vector * orig, Point a, Point b) {
-    for (int i=0; i<(*orig).size; i++) {
-        Point pt = (*orig).pts[i];
-        if (!same(pt, a) && !same(pt, b)) {
-            if (side(pt, a, b)) {
-                vectorAdd(orig, pt);
-            }
-        }  
-    }
-}
+// void filter_set(Vector * orig, Point a, Point b) {
+//     for (size_t i=0; i<(*orig).size; i++) {
+//         Point pt = (*orig).pts[i];
+//         if (!same(pt, a) && !same(pt, b)) {
+//             if (side(pt, a, b)) {
+//                 vectorAdd(orig, pt);
+//             }
+//         }  
+//     }
+// }
 
 Point reduceMin(Point m) {
     Point r;
@@ -260,7 +277,7 @@ void reduceDist(DistPoint * p, int len) {
     MPI_Op op;
     MPI_Op_create(mpi_dist_max_func, 1, &op);
     MPI_Allreduce(p, r, len, MPI_DIST_POINT, op, MPI_COMM_WORLD);
-    for (int i=0; i<len; i++) {
+    for (size_t i=0; i<len; i++) {
         p[i] = r[i];
     }
     free(r);
@@ -279,10 +296,15 @@ int main(int argc, char* argv[])
         return false;
     }
 
-    int myrank, numranks;
     MPI_Init(&argc, &argv); // init MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numranks);
+
+    double starttime, endtime;
+
+    if (myrank == 0) {
+        starttime = MPI_Wtime();
+    }
     
     createPointType();
     createDistPointType();
@@ -293,6 +315,7 @@ int main(int argc, char* argv[])
 
     if (myrank == 0) {
         printf("Number elements is %zu\n", totalPoints);
+        printf("numranks is %d\n", numranks);
     }
     size_t numPoints = totalPoints / numranks;
     // add stragglers to the last rank
@@ -311,24 +334,18 @@ int main(int argc, char* argv[])
     hull.pts[0] = l;
     hull.pts[1] = r;
 
-    // if (myrank == 0) {
-    //     printf("\tNew hull point: {%.2f, %.2f}\n", l.x, l.y);
-    //     printf("\tNew hull point: {%.2f, %.2f}\n", r.x, r.y);
-    // }
+    #ifdef DEBUG
+    if (myrank == 0) {
+        printf("\tNew hull point: {%.2f, %.2f}\n", l.x, l.y);
+        printf("\tNew hull point: {%.2f, %.2f}\n", r.x, r.y);
+    }
+    #endif
 
     Vector ls = vectorInit(0);
     Vector rs = vectorInit(0);
 
-    // if (myrank == 0) {
-    //     printf("USING POINTS:\n");
-    // }
-    // MPI_Barrier(MPI_COMM_WORLD);
-    // outputHull(points);
-    // MPI_Barrier(MPI_COMM_WORLD);
-
     partition_set(points, &ls, &rs, l, r);
     freeVector(points);
-
     HullParams * point_sets = calloc(2, sizeof(HullParams));
     point_sets[0].points = ls;
     point_sets[0].P = l;
@@ -339,17 +356,24 @@ int main(int argc, char* argv[])
 
     int active = 1;
     int i = 0;
-    int prev_size = 2;
+    size_t prev_size = 2;
     while (active) {
+        #ifdef DEBUG
         if (myrank == 0) {
             printf("-- PASS %d --\n", i);
         }
+        #endif
         HullParams * next_sets = calloc(prev_size * 2, sizeof(HullParams));
         DistPoint max_pts[prev_size];
         active = 0;
         for (int j=0; j<prev_size; j++) {
+            #ifdef DEBUG
+            if (myrank == 0) {
+                printf("\tj=%d\n", j);
+            }
+            #endif
             Vector pts = point_sets[j].points;
-            int num_pts = pts.size;
+            size_t num_pts = pts.size;
             if (num_pts == 0 || pts.pts == NULL) {
                 HullParams h1;
                 HullParams h2;
@@ -360,13 +384,18 @@ int main(int argc, char* argv[])
                 max_pts[j].dist = -1;
                 continue;
             }
+            #ifdef DEBUG
+            if (myrank == 0) {
+                printf("\tj=%d: performing split\n", j);
+            }
+            #endif
             active = 1;
             Point P = point_sets[j].P;
             Point Q = point_sets[j].Q;
             
-            DistPoint dpts[num_pts];
+            DistPoint * dpts = calloc(num_pts, sizeof(DistPoint));
             dpts[0].dist = dist(pts.pts[0], P, Q);
-            int max_ind = 0;
+            size_t max_ind = 0;
             for (int k=0; k<num_pts; k++) {
                 dpts[k].dist = dist(pts.pts[k], P, Q);
                 dpts[k].x = pts.pts[k].x;
@@ -376,6 +405,7 @@ int main(int argc, char* argv[])
                 }
             }
             max_pts[j] = dpts[max_ind];
+            free(dpts);
         }
         // SYNCHRONIZE MAX PT AND LOOP PARAMS
         // first, evaluate if we need to continue the recursion
@@ -387,18 +417,19 @@ int main(int argc, char* argv[])
         
         for (int j=0; j<prev_size; j++) {
             Vector pts = point_sets[j].points;
-            int num_pts = pts.size;
+            size_t num_pts = pts.size;
 
             Point P = point_sets[j].P;
             Point Q = point_sets[j].Q;
             Point c;
             c.x = max_pts[j].x;
             c.y = max_pts[j].y;
-
+            #ifdef DEBUG
             if (myrank == 0 && max_pts[j].dist > 0) {
                 printf("\tNew hull point: {%.2f, %.2f}\n", c.x, c.y);
                 vectorAdd(&hull, c);
             }
+            #endif
             if (num_pts == 0 || pts.pts == NULL) {
                 continue;
             }
@@ -433,8 +464,12 @@ int main(int argc, char* argv[])
         i++;
     }
     if (myrank == 0) {
+        #ifdef DEBUG
         printf("\n\nTHE CONVEX HULL IS:\n");
         outputHull(hull);
+        #endif
+        endtime = MPI_Wtime();
+        printf("Time: %f seconds\n", endtime-starttime);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
