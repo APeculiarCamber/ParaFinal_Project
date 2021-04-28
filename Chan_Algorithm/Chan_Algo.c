@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
@@ -6,22 +5,12 @@
 #include<string.h>
 #include<math.h>
 #include"mpi.h"
-#include""
+
+#define STARTING_VECTOR_SIZE 64
 
 struct Point{
 	float x;
 	float y;
-};
-
-struct Tuple{
-	struct Point p;
-	float angle;
-};
-
-struct Polar_vector{
-	struct Tuple * polar_list;
-	int size;
-	int count;
 };
 
 struct Point_stack{
@@ -35,18 +24,18 @@ struct retType{
 	int count;
 };
 
-typedef struct Tuple Tuple;
-typedef struct Polar_vector Polar_l;
 typedef struct Point_stack Polar_s;
 typedef struct Point Point;
 typedef struct retType retType;
+
+#define CLOCK_RATE 512000000.0
 typedef unsigned long long ticks;
 
 static __inline__ ticks getticks(void){
 	unsigned int tb1, tbu0, tbu1;
 	do{
 		__asm__ __volatile__ ("mftbu %0" : "=r"(tbu0));
-		__asm__ __volatile__ ("mftbu %0" : "=r"(tb1));
+		__asm__ __volatile__ ("mftb %0" : "=r"(tb1));
 		__asm__ __volatile__ ("mftbu %0" : "=r"(tbu1));
 	}while(tbu0 != tbu1);
 	return ((((unsigned long long)tbu0) << 32) | tb1);
@@ -56,14 +45,107 @@ void readInData(char* fName, Point * points, int myrank, size_t stride, size_t n
 	MPI_File mpiFile;
 	MPI_Status stat;
 	//after open, have offset be based upon rank
-	printf("starting point is %zu at %d\n", myrank*numPoints*sizeof(Point), myrank);
+	//printf("starting point is %zu at %d\n", myrank*numPoints*sizeof(Point), myrank);
 	int rc = MPI_File_open(MPI_COMM_WORLD, fName, MPI_MODE_RDONLY, MPI_INFO_NULL, &mpiFile);
-	printf("rc is %d\n", rc);
+	//printf("rc is %d\n", rc);
 	rc = MPI_File_read_at(mpiFile, myrank*numPoints*sizeof(Point), points, 2*numPoints, MPI_FLOAT, &stat);
-	printf("rc is %d\n", rc);
+	//printf("rc is %d\n", rc);
 	rc = MPI_File_close(&mpiFile);
-	printf("rc is %d\n", rc);
+	//printf("rc is %d\n", rc);
 }
+
+// VECTOR OPERATION : CONSTRUCT
+Point * vectorInit(int * cap, int * size) {
+    *cap = STARTING_VECTOR_SIZE;
+    *size = 0;
+    return malloc(STARTING_VECTOR_SIZE * sizeof(Point));
+}
+
+// VECTOR OPERATION : POP
+Point * vectorPop(Point * points, int * cap, int * size) {
+    *size = (*size) - 1;
+    return points;
+}
+
+// VECTOR OPERATION : ADD
+Point * vectorAdd(Point * points, int * cap, int * size, Point added) {
+    if ((*cap) <= (*size)) {
+        *cap = (*cap) * 2;
+        points = realloc(points, (*cap) * sizeof(Point));
+    }
+    points[(*size)++] = added;
+    return points;
+}
+
+// triple cross
+float cross(Point a, Point b, Point c) {
+    return (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x); 
+}
+
+//
+int comparePoints(const void* a, const void* b) {
+  Point * ap = (Point*)a;
+  Point * bp = (Point*)b;
+  int yComp = (ap->y > bp->y) - (ap->y < bp->y);
+  int xComp = (ap->x > bp->x) - (ap->x < bp->x);
+  return xComp == 0 ? yComp : xComp;
+}
+
+// perform a local serial sort of points
+void localSort(Point * points, size_t numPoints) {
+    qsort (points, numPoints, sizeof(Point), comparePoints);
+}
+
+// reverse the contents of a points array
+void reversePointsArray(Point * pts, int size) {
+    int l = 0, r = size - 1;
+    while (l < r) {
+        Point t = pts[l];
+        pts[l++] = pts[r];
+        pts[r--] = t;
+    }
+}
+
+// Concat top and bottom hulls together, the last elements of both are duplicates and should not be added
+Point * ConcatHulls(Point * hull1, int size1, Point * hull2, int size2, int * hullSize) {
+    *hullSize = size1 + size2 - 2;
+    Point * concat = malloc((*hullSize) * sizeof(Point));
+    for (int p = 0; p < size1 - 1; ++p)
+        concat[p] = hull1[p];
+    for (int p = 0; p < size2 - 1; ++p)
+        concat[p + size1 - 1] = hull2[p];
+
+    return concat;
+}
+
+Point * makeSubHull_Monotone(Point * pts, size_t numPoints, int * subHullSize) {
+	localSort(pts, numPoints);
+
+	int bottomCap, bottomSize;
+    Point * bottomHull = vectorInit(&bottomCap, &bottomSize);
+    int topCap, topSize;
+    Point * topHull = vectorInit(&topCap, &topSize);
+    // TRAVERSE
+    for (int p = 0; p < numPoints; ++p) {
+        while (bottomSize >= 2 && cross(bottomHull[bottomSize - 2], bottomHull[bottomSize - 1], pts[p]) <= 0) {
+            bottomHull = vectorPop(bottomHull, &bottomCap, &bottomSize);
+        }
+        bottomHull = vectorAdd(bottomHull, &bottomCap, &bottomSize, pts[p]);
+
+        while (topSize >= 2 && cross(topHull[topSize - 2], topHull[topSize -1], pts[p]) >= 0) {
+            topHull = vectorPop(topHull, &topCap, &topSize);
+        }
+        topHull = vectorAdd(topHull, &topCap, &topSize, pts[p]);
+    }
+    // top hull must be reversed
+    reversePointsArray(topHull, topSize);
+    Point * concat = ConcatHulls(topHull, topSize, bottomHull, bottomSize, subHullSize);
+
+    free(topHull);
+    free(bottomHull);
+    return concat;
+}
+
 
 MPI_Datatype MPI_POINT;
 void createPointType(){
@@ -77,61 +159,8 @@ void createPointType(){
 	MPI_Type_commit(&MPI_POINT);
 }
 
-void createSamples(Point* points, int num_sets,Point *** point_set, int num_points){
-	//TODO: create a sample of points through this
-	/*
-	Pseudo code
-	Randomly pick group of points
-
-	*/
-	*point_set = calloc(num_sets, sizeof(Point*));
-
-	int size_of_points = num_points/num_sets;
-
-	int i = 0;
-	for (int i = 0; i < num_sets; i++){
-		*point_set[i] = points+size_of_points*i;
-	}
-}
-
-float return_polar_angle(Point p1, Point p2){
-	float d_x = (p1.y)-(p2.x);
-	float d_y = (p1.y)-(p2.y);
-	return atan2(d_y,d_x);
-}
-
-Point bottom_left(Point * set_points, int num_points, int* index){
-	float min_y = 1000000;
-	Point min_point;
-	int i;
-	for (i = 0; i < num_points; i++){
-		if (set_points[i].y < min_y){
-			//printf("min y: %f, min x: %f\n", min_point.y, min_point.x);
-			min_y = set_points[i].y;
-			min_point = set_points[i];
-			*index = i;
-		}
-		else if(set_points[i].y == min_y){
-			if (set_points[i].x < min_point.x){
-				min_point = set_points[i];
-				*index = i;
-			}
-		}
-	}
-	return min_point;
-}
-
 float orientation(Point p1, Point p2, Point p3){
 	return (p2.y - p1.y)*(p3.x-p2.x) - (p3.y-p2.y)*(p2.x-p1.x);
-}
-
-bool clockwise_turn(Point p1, Point p2, Point p3){
-	float or = orientation(p1,p2,p3);
-
-	if (or < 0){
-		return false;
-	}
-	return true;
 }
 
 int compare (const void *a, const void * b){
@@ -147,51 +176,6 @@ int compare (const void *a, const void * b){
 	return 1;
 }
 
-/*
-Point* remove_repeat(Point* current_list, Point min_point, int numPoints, int myrank, int* amount){
-	Point* without_repeat;
-	int current_size = 8;
-
-	without_repeat = calloc(current_size, sizeof(Point));
-	
-	without_repeat[0] = min_point;
-
-	int count = 1;
-	int i;
-	for (i = 1; i < numPoints; i++){
-		int j;
-		Point current = current_list[i];
-		int index = item_exists(without_repeat, current, min_point, numPoints);
-		if (index == -1){
-			if (count == current_size){
-				current_size = current_size*2;
-				without_repeat = realloc(without_repeat, current_size*sizeof(Point));
-			}
-			without_repeat[count] = current;
-			count += 1;
-		}
-		else{
-			if (distance_compare(current, without_repeat[index], min_point) < 0){
-				without_repeat[index] = current;
-			}
-		}
-	}
-	*amount = count;
-	return without_repeat;
-}
-*/
-
-void pop_from_stack(Polar_s* ps){
-	//Point empty;
-	//ps->stack[ps->size] = empty;
-	ps->size = ps->size-1;
-}
-
-void add_to_stack(Polar_s* ps, Point new_point, int current_size){
-	ps->size = ps->size+1;
-	ps->stack[ps->size] = new_point;
-}
-
 retType perform_chan(Point* hull_set, int m){
 	int current_size = 8;
 	retType final;
@@ -200,9 +184,9 @@ retType perform_chan(Point* hull_set, int m){
 
 	qsort(hull_set, m, sizeof(Point), compare);
 
-	for (int i = 0; i < m ;i++){
+	/*for (int i = 0; i < m ;i++){
 		printf("%d hull_set is x:%f, y:%f\n", i, hull_set[i].x, hull_set[i].y);
-	}
+	}*/
 
 	final.final[0] = hull_set[0];
 
@@ -215,14 +199,14 @@ retType perform_chan(Point* hull_set, int m){
 
 	while(next.x != final.final[0].x && next.y != final.final[0].y){
 		next = hull_set[1];
-		printf("new iteration\n");
+		/*printf("new iteration\n");
 		for (i = 0; i < final.count; i++){
 			printf("%d current hull is x:%f, y:%f\n", i, final.final[i].x, final.final[i].y);
 		}
-		printf("\n");
+		printf("\n");*/
 		int curr = final.count;
-		printf("next is x:%f, y:%f\n", next.x, next.y);
-		printf("prior is x:%f, y:%f\n", final.final[curr-1].x, final.final[curr-1].y);
+		//printf("next is x:%f, y:%f\n", next.x, next.y);
+		//printf("prior is x:%f, y:%f\n", final.final[curr-1].x, final.final[curr-1].y);
 		for (i = 0 ; i < m; i++){
 			Point current = hull_set[i];
 			if (current.x != final.final[curr-1].x && current.y != final.final[curr-1].y){
@@ -236,8 +220,17 @@ retType perform_chan(Point* hull_set, int m){
 		}
 		final.count = final.count+1;
 		if (final.count == current_size){
+			//printf("before realloc\n");
+			int j;
+			/*for (j = 0; j < final.count; j++){
+				printf("%d current hull is x:%f, y:%f\n", j, final.final[j].x, final.final[j].y);
+			}*/
 			current_size = current_size*2;
-			realloc(final.final, current_size*sizeof(Polar_s));
+			final.final = realloc(final.final, current_size*sizeof(Point));
+			//printf("after realloc\n");
+			/*for (j = 0; j < final.count; j++){
+				printf("%d current hull is x:%f, y:%f\n", j, final.final[j].x, final.final[j].y);
+			}*/
 		}
 		final.final[final.count-1] = next;
 	}
@@ -261,56 +254,61 @@ int main(int argc, char*argv[]){
 	numPoints += ((numranks == myrank + 1)*(totalPoints%numPoints));
 
 	Point * points = malloc(numPoints * sizeof(Point));
+	ticks start = getticks();
 	readInData(argv[2], points, myrank, (totalPoints/numranks)*sizeof(Point), numPoints);
 
-	int i;
+	int subHullSize;
 
-	int location = 0;
+	Point * subhull = makeSubHull_Monotone(points, numPoints, &subHullSize);
 
-	//Point min_point = bottom_left(points, numPoints, &location);
+	//printf("%d after monotone\n", myrank);
 
-	//qsort_r(points, numPoints, sizeof(struct Point), compare, &min_point);W
+	int* hull_sizes = NULL;
+	if (myrank == 0){
+		hull_sizes = malloc(numranks *sizeof(int));
+	}
 
-	//Point* final_point_set = remove_repeat(points, min_point, numPoints, myrank, &count);
+	MPI_Gather(&subHullSize, 1, MPI_INT, hull_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	int * disp_array = NULL;
+	Point * hull_gather;
+	size_t gather_size = 0;
+
+	//printf("%d after gather\n", myrank);
 
 	if (myrank == 0){
-		retType hull = perform_chan(points, numPoints);
-
-		int final_size = 0;
-
-		//Point* set = calloc(hull.size, sizeof(Point));
-
-		//printf("%d size is %d\n", myrank, hull.size);
-
-		for (i = 0; i < hull.count; i++){
-			printf("%d hull is x:%f, y%f\n", i,hull.final[i].x, hull.final[i].y);
+		for (int i = 0; i < numranks;i++){
+			gather_size += hull_sizes[i];
 		}
-		
-	}
 
-	//MPI_Reduce(&hull.size, &final_size, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+		//printf("after gather size");
+
+		disp_array = calloc(numranks, sizeof(int));
+		disp_array[0] = 0;
+		for (int i = 1; i < numranks; i++){
+			disp_array[i] = disp_array[i-1]+hull_sizes[i-1];
+		}
+
+		//printf("after disp");
+		hull_gather = calloc(gather_size, sizeof(Point));
+	}
 	
-	int* hull_sizes = calloc(numranks, sizeof(int));
 
-	MPI_Gather(&hull.size, 1, MPI_INT, hull_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gatherv(subhull, subHullSize, MPI_POINT, hull_gather, hull_sizes, disp_array, MPI_POINT, 0, MPI_COMM_WORLD);
 
-	for (i = 0; i < numranks; i++){
-		final_size = final_size+hull_sizes[i];
+	//printf("after gatherv\n");
+
+	if (myrank == 0){
+		retType final_hull = perform_chan(hull_gather, (int) gather_size);
+		ticks end = getticks();
+		printf("%llu to %llu\n", start,end);
+		printf("The final time was %f for %zu and %d ranks\n",((double)(end-start))/CLOCK_RATE, totalPoints,numranks);
+		printf("The final convex hull was of size %d\n", final_hull.count);
+
+		free(hull_gather);
+		free(disp_array);
+		free(hull_sizes);
 	}
-
-	int* disp_array = calloc(numranks, sizeof(int));
-
-	for (int i = 0; i < numranks; i++){
-		int sum = 0;
-		for (int j = 0; j < i; j++){
-			sum = sum+hull_sizes[j];
-		}
-		disp_array[i] = sum;
-	}
-
-	Point* hull_gather = calloc(final_size, sizeof(Point));
-
-	MPI_Gatherv(set, hull.size, MPI_POINT, hull_gather, hull_sizes, disp_array, MPI_POINT, 0, MPI_COMM_WORLD);
-
+	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Finalize();
 	return 0;
 }
