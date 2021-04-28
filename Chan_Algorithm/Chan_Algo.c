@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
@@ -92,27 +93,13 @@ void createSamples(Point* points, int num_sets,Point *** point_set, int num_poin
 	}
 }
 
-bool clockwise_turn(Point p1, Point p2, Point p3){
-	float slope_l1 = ((p2.y)-(p1.y))/((p2.x)-(p1.x));
-	float slope_l2 = ((p3.y)-(p2.y))/((p3.x)-(p2.x));
-
-	if (slope_l1 < slope_l2){
-		return true;
-	}
-	return false;
-}
-
-float orientation(Point p1, Point p2, Point p3){
-	return (p2.y - p1.y)*(p3.x-p2.x) - (p3.y-p2.y)*(p2.x-p1.x);
-}
-
 float return_polar_angle(Point p1, Point p2){
 	float d_x = (p1.y)-(p2.x);
 	float d_y = (p1.y)-(p2.y);
 	return atan2(d_y,d_x);
 }
 
-Point bottom_left(Point * set_points, int num_points){
+Point bottom_left(Point * set_points, int num_points, int* index){
 	float min_y = 1000000;
 	Point min_point;
 	int i;
@@ -121,17 +108,19 @@ Point bottom_left(Point * set_points, int num_points){
 			//printf("min y: %f, min x: %f\n", min_point.y, min_point.x);
 			min_y = set_points[i].y;
 			min_point = set_points[i];
+			*index = i;
 		}
 		else if(set_points[i].y == min_y){
 			if (set_points[i].x < min_point.x){
 				min_point = set_points[i];
+				*index = i;
 			}
 		}
 	}
 	return min_point;
 }
 
-Tuple* polar_points(Point * set_points, int num_points, Point min_point){
+Tuple* polar_points(Point * set_points, int num_points, Point min_point, int myrank){
 	int i;
 	Tuple* point_list = calloc(num_points-1, sizeof(Tuple));
 	int count = 0;
@@ -149,14 +138,17 @@ Tuple* polar_points(Point * set_points, int num_points, Point min_point){
 	return point_list;
 }
 
-int item_exists(Polar_l exist_list, float angle){
-	int i;
-	for (i = 0; i < exist_list.size; i++){
-		if (angle == exist_list.polar_list[i].angle){
-			return i;
-		}
+float orientation(Point p1, Point p2, Point p3){
+	return (p2.y - p1.y)*(p3.x-p2.x) - (p3.y-p2.y)*(p2.x-p1.x);
+}
+
+bool clockwise_turn(Point p1, Point p2, Point p3){
+	float or = orientation(p1,p2,p3);
+
+	if (or < 0){
+		return false;
 	}
-	return -1;
+	return true;
 }
 
 int distance_compare(Point p1, Point p2, Point min_point){
@@ -166,57 +158,85 @@ int distance_compare(Point p1, Point p2, Point min_point){
 	return d1-d2;
 }
 
-Polar_l remove_repeat(Tuple* current_list, Point min_point, int numPoints){
-	Polar_l without_repeat;
-	int current_size = 8;
+int compare (const void *a, const void * b, void * c){
+	Point *point_a = (Point *)a;
+	Point *point_b = (Point *)b;
+	Point *point_c = (Point *)c;
 
-	without_repeat.polar_list = calloc(current_size, sizeof(Tuple));
-	without_repeat.size = current_size;
-	without_repeat.count = 0;
+	float or = (point_b->y - point_a->y)*(point_c->x-point_b->x) - (point_c->y-point_b->y)*(point_b->x-point_a->x);
 
-	int count = 0;
-	int i;
-	for (i = 0; i < numPoints-1; i++){
-		Tuple current = current_list[i];
-		int index = item_exists(without_repeat, current.angle);
-		if (index == -1){
-			count += 1;
-			without_repeat.count = without_repeat.count+1;
-			if (count == current_size){
-				without_repeat.size = without_repeat.size*2;
-				current_size = current_size*2;
-				without_repeat.polar_list = realloc(without_repeat.polar_list, without_repeat.size*sizeof(Tuple));
-			}
-			without_repeat.polar_list[count] = current;
+	if (or == 0){
+		float d1 = sqrt(pow((point_b->x-point_a->x),2)+pow((point_b->y-point_a->y),2));
+		float d2 = sqrt(pow((point_c->x-point_a->x),2)+pow((point_c->y-point_a->y),2));
+		if (d1 > d2){
+			return -1;
 		}
 		else{
-			if (distance_compare(current.p, without_repeat.polar_list[index].p, min_point) < 0){
-				without_repeat.polar_list[index].p = current.p;
+			return 1;
+		}
+	}
+
+	if (or > 0){
+		return 1;
+	}
+	return -1;
+}
+
+int item_exists(Point* exist_list, Point current, Point min_point, int numPoints){
+	int i;
+	for (i = 0; i < numPoints; i++){
+		float or = orientation(min_point, current, exist_list[i]);
+		if (or == 0){
+			return i;
+		}
+	}
+	return -1;
+}
+
+Point* remove_repeat(Point* current_list, Point min_point, int numPoints, int myrank, int* amount){
+	Point* without_repeat;
+	int current_size = 8;
+
+	without_repeat = calloc(current_size, sizeof(Point));
+	
+	without_repeat[0] = min_point;
+
+	int count = 1;
+	int i;
+	for (i = 1; i < numPoints; i++){
+		int j;
+		Point current = current_list[i];
+		int index = item_exists(without_repeat, current, min_point, numPoints);
+		if (index == -1){
+			if (count == current_size){
+				current_size = current_size*2;
+				without_repeat = realloc(without_repeat, current_size*sizeof(Point));
+			}
+			without_repeat[count] = current;
+			count += 1;
+		}
+		else{
+			if (distance_compare(current, without_repeat[index], min_point) < 0){
+				without_repeat[index] = current;
 			}
 		}
 	}
+	*amount = count;
 	return without_repeat;
 }
 
-int compare (const void *a, const void * b){
-	Tuple *tupleA = (Tuple *)a;
-	Tuple *tupleB = (Tuple *)b;
-
-	return (tupleA->angle - tupleB->angle);
-}
-
 void pop_from_stack(Polar_s* ps){
-	ps->size = ps->size-1;
 	Point empty;
 	ps->stack[ps->size] = empty;
+	ps->size = ps->size-1;
 }
 
 void add_to_stack(Polar_s* ps, Point new_point, int current_size){
 	ps->size = ps->size+1;
-	ps->stack[ps->size-1] = new_point;
+	ps->stack[ps->size] = new_point;
 }
 
-Polar_s Perform_Graham(Point* point_set, int set_size){
+Polar_s Perform_Graham(Point* point_set, int set_size, int myrank){
 	Polar_s hull;
 	int current_size = 8;
 	hull.stack = calloc(current_size, sizeof(Point));
@@ -226,11 +246,27 @@ Polar_s Perform_Graham(Point* point_set, int set_size){
 	hull.stack[1] = point_set[1];
 	hull.stack[2] = point_set[2];
 
+	int j;
+
+	/*printf("before iteration\n");
+	for (j = 0; j < 3; j++){
+		printf("%d point is x:%f, y%f \n", myrank, hull.stack[j].x, hull.stack[j].y);
+	}*/
+	
+
 	int i;
 	for (i = 3; i < set_size; i++){
-		Point prev = point_set[i-1];
-		Point curr = point_set[i];
-		Point next = point_set[i+1];
+		Point prev = point_set[hull.size-1];
+		Point curr = hull.stack[hull.size];
+		Point next = point_set[i];
+		if (myrank == 0){
+			printf("next is x:%f, y:%f\n", next.x, next.y);
+			printf("new iteration\n");
+			for (j = 0; j < hull.size; j++){
+				printf("%d current hull x:%f, y:%f. myrank %d\n", j, hull.stack[j].x, hull.stack[j].y, myrank);
+			}
+			printf("\n");
+		}
 		bool right_turn = clockwise_turn(prev, curr, next);
 		if (right_turn == false){
 			if (hull.size == current_size){
@@ -242,9 +278,19 @@ Polar_s Perform_Graham(Point* point_set, int set_size){
 		else{
 			while (right_turn == true){
 				pop_from_stack(&hull);
-				int current = hull.size-1;
+				int current = hull.size;
 				curr = hull.stack[current];
 				prev = hull.stack[current-1];
+				if (myrank == 0){
+					printf("after removal next is %f %f\n", next.x, next.y);
+					printf("after removal curr is x:%f, y:%f\n", curr.x, curr.y);
+					printf("after removal prev is x:%f, y:%f\n", prev.x, prev.y);
+					printf("\n");
+					for (j = 0; j < hull.size; j++){
+						printf("%d current hull x:%f, y:%f. myrank %d\n", j, hull.stack[j].x, hull.stack[j].y, myrank);
+					}
+					printf("\n");
+				}
 				right_turn = clockwise_turn(prev, curr, next);
 			}
 			add_to_stack(&hull, next, hull.size);
@@ -325,40 +371,39 @@ int main(int argc, char*argv[]){
 
 	int i;
 
-	/*
-	for (i = 0; i < numPoints; i++){
-		printf("point is %f, %f, rank is %d\n", points[i].x, points[i].y, myrank);
-	}
-	*/
+	int location = 0;
 
-	Point min_point = bottom_left(points, numPoints);
+	Point min_point = bottom_left(points, numPoints, &location);
 
-	Tuple* p_points = polar_points(points, numPoints, min_point);
+	Point temp = points[0];
+	points[0] = min_point;
+	points[location] = temp;
 
-	qsort(p_points, (size_t)numPoints-1, sizeof(Tuple), compare);
+	qsort_r(points, numPoints, sizeof(struct Point), compare, &min_point);
 
-	Polar_l final_polar_set = remove_repeat(p_points, min_point, numPoints);
+	int j;
 
-	//printf("size of final set is %d\n", final_polar_set.size);
+	int count = 0;
+
+	Point* final_point_set = remove_repeat(points, min_point, numPoints, myrank, &count);
 	
-	if (final_polar_set.size < 3){
+	if (myrank == 0){
+		for (int i = 0; i < count; i++){
+			printf("%f, %f\n", final_point_set[i].x, final_point_set[i].y);
+		}
+	}
+
+	if (count < 3){
 		return 0;
 	}
 
-	//for (i = 0; i < final_polar_set.count; i++){
-	//	printf("%d final point is %f, %f, rank is %d\n", i, final_polar_set.polar_list[i].p.x, final_polar_set.polar_list[i].p.y, myrank);
-	//}
-
-	Point* final_point_set = calloc(final_polar_set.size, sizeof(Point));
-	for (i = 0; i < final_polar_set.count; i++){
-		final_point_set[i] = final_polar_set.polar_list[i].p;
-	}
-
-	Polar_s hull = Perform_Graham(final_point_set, final_polar_set.size);
+	Polar_s hull = Perform_Graham(final_point_set, count, myrank);
 
 	int final_size = 0;
 
 	Point* set = calloc(hull.size, sizeof(Point));
+
+	//printf("%d size is %d\n", myrank, hull.size);
 
 	for (i = 0; i < hull.size; i++){
 		//printf("outer hull is x:%f, y:%f, rank is %d\n", hull.stack[i].x, hull.stack[i].y, myrank);
@@ -369,7 +414,7 @@ int main(int argc, char*argv[]){
 
 	int* hull_sizes = calloc(numranks, sizeof(int));
 
-	MPI_Gather(&hull.size, 1, MPI_INT, hull_sizes, numranks, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Gather(&hull.size, 1, MPI_INT, hull_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	for (i = 0; i < numranks; i++){
 		final_size = final_size+hull_sizes[i];
@@ -389,6 +434,7 @@ int main(int argc, char*argv[]){
 
 	MPI_Gatherv(set, hull.size, MPI_POINT, hull_gather, hull_sizes, disp_array, MPI_POINT, 0, MPI_COMM_WORLD);
 
+	/*
 	if (myrank == 0){
 
 		for (i = 0; i < final_size; i++){
@@ -406,8 +452,8 @@ int main(int argc, char*argv[]){
 		for (int i = 0; i < final_hull.count; i++){
 			printf("final hull is x:%f, y:%f", final_hull.final[i].x, final_hull.final[i].y);
 		}
-		*/
+		
 	}
-
+	*/
 	return 0;
 }
