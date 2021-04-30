@@ -35,16 +35,23 @@ def readInHull(file_name):
 
 if __name__=="__main__":
 	if (len(sys.argv) < 3):
-		print("FORMAT: python", sys.argv[0], "<points file> <hull file>")
+		print("FORMAT: python", sys.argv[0], "<points file> <hull file> <optional: output name> <optional: draw lines=False>")
 		print("For file formatting details, see source code for readIn functions.")
 		exit(-1)
-	plot_with_lines = len(sys.argv) > 3
+	fname = None if len(sys.argv) < 4 else sys.argv[3]
+	plot_with_lines = len(sys.argv) > 4
 	# plot points
 	points = readInPoints(sys.argv[1])
 	matplotlib.pyplot.scatter(points[0], points[1]) 
 	# plot hull
 	hull = readInHull(sys.argv[2])
 	matplotlib.pyplot.scatter(hull[0], hull[1], color='red')
+
+	ax = matplotlib.pyplot.gca()
+	ax.set_aspect(1.0)
+	
 	if plot_with_lines:
 		matplotlib.pyplot.plot(hull[0], hull[1], linestyle='solid', color='red')
+	if fname is not None:
+		matplotlib.pyplot.savefig(fname)
 	matplotlib.pyplot.show()

@@ -7,6 +7,8 @@
 #include<cuda_runtime.h>
 #include <curand_kernel.h>
 
+#define PI 3.14159265359
+
 struct Point {
     float x;
     float y;
@@ -32,22 +34,21 @@ __global__ void data_kernel(Point* p_data, size_t numPoints, int seed,
         index += blockDim.x * gridDim.x;
     }
 }
+
 // LOCAL
 __global__ void data_circle_kernel(Point* p_data, size_t numPoints, int seed,
-    float leftX, float lowerY, float rightX, float upperY) {
+    float radius) {
 
     curandState_t state;
     curand_init (seed + (128 * blockIdx.x) + (60000 * threadIdx.x), 0, 0, &state);
-    float sizeX = rightX - leftX;
-    float sizeY = upperY - lowerY;
 
     size_t index = blockIdx.x * blockDim.x + threadIdx.x;
-    float x, y;
     while (index < numPoints) {
-        x = curand_uniform (&state);
-        y = curand_uniform (&state);
-        p_data[index].x = (x * sizeX) + leftX;
-        p_data[index].y = (y * sizeY) + lowerY;
+        float r = radius * sqrt(curand_uniform (&state));
+        float t = curand_uniform (&state) * 2 * PI;
+
+        p_data[index].x = radius + (r * cos(t));
+        p_data[index].y = radius + (r * sin(t));
         index += blockDim.x * gridDim.x;
     }
 }
@@ -59,6 +60,9 @@ extern "C" {
 
     void c_callKernel(int numBlocks, int threadsCount, Point * p_data, size_t numPoints, int seed,
         float leftX, float lowerY, float rightX, float upperY);
+
+    void c_callCircleKernel(int numBlocks, int threadsCount, Point * p_data, 
+        size_t numPoints, int seed, float radius);
 
     void setCudaDeviceByRank(int myrank);
 
@@ -115,8 +119,8 @@ void c_callKernel(int numBlocks, int threadsCount, Point * p_data, size_t numPoi
 }
 
 void c_callCircleKernel(int numBlocks, int threadsCount, Point * p_data, size_t numPoints, int seed,
-        float leftX, float lowerY, float rightX, float upperY) {
+        float radius) {
     data_circle_kernel<<<numBlocks, threadsCount>>>(p_data, numPoints, seed,
-        leftX, lowerY, rightX, upperY);
+        radius);
     cudaDeviceSynchronize();
 }
