@@ -1,6 +1,6 @@
 module load spectrum-mpi xl_r
 mpicc Monotone_chain.c -o mono_chain -D DEBUG
-sbatch -N $1 --ntasks-per-node=$2 --partition=dcs --gres=gpu:4 -t 10 ./slurm_chain.sh $3 $4
+sbatch -N $1 --ntasks-per-node=$2 --partition=dcs --gres=gpu:4 -t 30 ./slurm_chain.sh $3 $4
 # ./run-mono.sh <number of nodes> <number of mpi ranks PER NODE> <TOTAL NUMBER OF POINTS> <Oversampling>
 # Mpi ranks should not exceed 32 per NODE, so when running 64 ranks, use ./run-mono.sh 2 32 ... and NOT ./run-mono.sh 1 64 ...
 # In contrast to Points Creator, the number of points here is TOTAL.
