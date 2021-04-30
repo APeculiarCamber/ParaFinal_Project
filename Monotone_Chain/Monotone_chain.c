@@ -280,10 +280,7 @@ void outputResults(Point * hull, unsigned hullSize,
     printf("The time from after file IO to end was %f for %d ranks for %zu total points..\n", 
         (double)(finishTime - startFromAlgo) / CLOCK_RATE, numranks, totalPoints);
 
-    // write hull to file
-    FILE *f = fopen("mono_hull_results.bin", "wb");
-    fwrite(hull, sizeof(Point), hullSize, f);
-    fclose(f);
+    printf("The final size of the convex hull was: %u\n", hullSize);
 
 #ifdef DEBUG
     printf("\nTHE CONVEX HULL IS:\n");

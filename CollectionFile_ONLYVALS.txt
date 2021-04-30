@@ -1,0 +1,1432 @@
+// ******************   131072   ***********************
+*Number of points is 131072 run over 1 ranks with 64 oversampling.
+The time from file IO to end was 0.093592
+The time from after file IO to end was 0.080640
+
+*Number of points is 131072 run over 2 ranks with 64 oversampling.
+The time from file IO to end was 0.065337
+The time from after file IO to end was 0.058483
+
+*Number of points is 131072 run over 4 ranks with 64 oversampling.
+The time from file IO to end was 0.048988
+The time from after file IO to end was 0.045977
+
+*Number of points is 131072 run over 8 ranks with 64 oversampling.
+The time from file IO to end was 0.037992
+The time from after file IO to end was 0.034227
+
+*Number of points is 131072 run over 16 ranks with 64 oversampling.
+The time from file IO to end was 0.035620
+The time from after file IO to end was 0.025794
+
+*Number of points is 131072 run over 32 ranks with 64 oversampling.
+The time from file IO to end was 0.036926
+The time from after file IO to end was 0.024438
+
+*Number of points is 131072 run over 64 ranks with 64 oversampling.
+The time from file IO to end was 0.038071
+The time from after file IO to end was 0.023327
+
+ ./run_points.sh 1 2 131072 16 0 0 2 2
+**************** 262144 *****************
+*Number of points is 262144 run over 1 ranks with 128 oversampling.
+The time from file IO to end was 0.167329
+The time from after file IO to end was 0.164913
+
+*Number of points is 262144 run over 2 ranks with 128 oversampling.
+The time from file IO to end was 0.121654
+The time from after file IO to end was 0.118787
+
+*Number of points is 262144 run over 4 ranks with 128 oversampling.
+The time from file IO to end was 0.088334
+The time from after file IO to end was 0.085313
+
+*Number of points is 262144 run over 8 ranks with 128 oversampling.
+The time from file IO to end was 0.080803
+The time from after file IO to end was 0.077144
+
+*Number of points is 262144 run over 16 ranks with 128 oversampling.
+The time from file IO to end was 0.059385
+The time from after file IO to end was 0.054126
+
+*Number of points is 262144 run over 32 ranks with 128 oversampling.
+The time from file IO to end was 0.069797
+The time from after file IO to end was 0.061791
+
+*Number of points is 262144 run over 64 ranks with 128 oversampling.
+The time from file IO to end was 0.081912
+The time from after file IO to end was 0.059514
+
+BONUS (BETTER PERFORMANCE IS POSSIBLE):
+*Number of points is 262144 run over 64 ranks with 32 oversampling.
+The time from file IO to end was 0.060561
+The time from after file IO to end was 0.051602
+
+*******************  524288  ****************
+*Number of points is 524288 run over 1 ranks with 256 oversampling.
+The time from file IO to end was 0.386405
+The time from after file IO to end was 0.383439
+
+*Number of points is 524288 run over 2 ranks with 256 oversampling.
+The time from file IO to end was 0.254698
+The time from after file IO to end was 0.251820
+
+*Number of points is 524288 run over 4 ranks with 256 oversampling.
+The time from file IO to end was 0.163993
+The time from after file IO to end was 0.160987
+
+*Number of points is 524288 run over 8 ranks with 256 oversampling.
+The time from file IO to end was 0.130656
+The time from after file IO to end was 0.127086
+
+*Number of points is 524288 run over 16 ranks with 256 oversampling.
+The time from file IO to end was 0.133564
+The time from after file IO to end was 0.128950
+
+*Number of points is 524288 run over 32 ranks with 256 oversampling.
+The time from file IO to end was 0.118524
+The time from after file IO to end was 0.111110
+
+*Number of points is 524288 run over 64 ranks with 256 oversampling.
+The time from file IO to end was 0.161569
+The time from after file IO to end was 0.139209
+
+BONUS (BETTER IS POSSIBLE): 
+*Number of points is 524288 run over 64 ranks with 32 oversampling.
+The time from file IO to end was 0.748660
+The time from after file IO to end was 0.087913
+
+./run_points.sh 1 8 131072 16 0 0 2 2
+*******************  1048576  ***************
+*Number of points is 1048576 run over 1 ranks with 512 oversampling.
+The time from file IO to end was 0.701944
+The time from after file IO to end was 0.697956
+
+*Number of points is 1048576 run over 2 ranks with 512 oversampling.
+The time from file IO to end was 0.488995
+The time from after file IO to end was 0.485344
+
+*Number of points is 1048576 run over 4 ranks with 512 oversampling.
+The time from file IO to end was 0.326920
+The time from after file IO to end was 0.323448
+
+*Number of points is 1048576 run over 8 ranks with 512 oversampling.
+The time from file IO to end was 0.242204
+The time from after file IO to end was 0.238392
+
+*Number of points is 1048576 run over 16 ranks with 512 oversampling.
+The time from file IO to end was 0.196075
+The time from after file IO to end was 0.191466
+
+*Number of points is 1048576 run over 32 ranks with 512 oversampling.
+The time from file IO to end was 0.217372
+The time from after file IO to end was 0.210077
+
+*Number of points is 1048576 run over 64 ranks with 512 oversampling.
+The time from file IO to end was 0.224043
+The time from after file IO to end was 0.202166
+
+BONUS (SMARTER OVERSAMPLING?):
+*Number of points is 1048576 run over 64 ranks with 32 oversampling.
+The time from file IO to end was 0.159287
+The time from after file IO to end was 0.150797
+
+
+*************  2097152  **************
+*Number of points is 2097152 run over 1 ranks with 1024 oversampling.
+The time from file IO to end was 1.498568
+The time from after file IO to end was 1.479923
+
+*Number of points is 2097152 run over 2 ranks with 1024 oversampling.
+The time from file IO to end was 0.999899
+The time from after file IO to end was 0.994988
+
+*Number of points is 2097152 run over 4 ranks with 1024 oversampling.
+The time from file IO to end was 0.660514
+The time from after file IO to end was 0.656077
+
+*Number of points is 2097152 run over 8 ranks with 1024 oversampling.
+The time from file IO to end was 0.493595
+The time from after file IO to end was 0.489388
+
+*Number of points is 2097152 run over 16 ranks with 1024 oversampling.
+The time from file IO to end was 0.369614
+The time from after file IO to end was 0.364273
+
+*Number of points is 2097152 run over 32 ranks with 1024 oversampling.
+The time from file IO to end was 0.486121
+The time from after file IO to end was 0.478485
+
+*Number of points is 2097152 run over 64 ranks with 1024 oversampling.
+The time from file IO to end was 0.376844
+The time from after file IO to end was 0.352814
+
+BONUS (IF ONLY THIS WAS MATHETICAL BASED):
+*Number of points is 2097152 run over 64 ranks with 32 oversampling.
+The time from file IO to end was 0.314745
+The time from after file IO to end was 0.305617
+
+
+*******************  4194304  **************************
+*Number of points is 4194304 run over 1 ranks with 2048 oversampling.
+The time from file IO to end was 3.007848
+The time from after file IO to end was 2.997812
+
+*Number of points is 4194304 run over 2 ranks with 2048 oversampling.
+The time from file IO to end was 2.018838
+The time from after file IO to end was 2.011761
+
+*Number of points is 4194304 run over 4 ranks with 2048 oversampling.
+The time from file IO to end was 1.390435
+The time from after file IO to end was 1.384963
+
+*Number of points is 4194304 run over 8 ranks with 2048 oversampling.
+The time from file IO to end was 0.979528
+The time from after file IO to end was 0.974590
+
+*Number of points is 4194304 run over 16 ranks with 2048 oversampling.
+The time from file IO to end was 0.761352
+The time from after file IO to end was 0.755735
+
+*Number of points is 4194304 run over 32 ranks with 2048 oversampling.
+The time from file IO to end was 0.939565
+The time from after file IO to end was 0.932329
+
+*Number of points is 4194304 run over 64 ranks with 2048 oversampling.
+The time from file IO to end was 0.728599
+The time from after file IO to end was 0.706072
+
+BONUS:
+*Number of points is 4194304 run over 64 ranks with 64 oversampling.
+The time from file IO to end was 0.646463
+The time from after file IO to end was 0.637629
+
+*Number of points is 8388608 run over 1 ranks with 4096 oversampling.
+The time from file IO to end was 6.140727
+The time from after file IO to end was 6.120351
+
+*Number of points is 8388608 run over 2 ranks with 4096 oversampling.
+The time from file IO to end was 4.150519
+The time from after file IO to end was 4.137744
+
+*Number of points is 8388608 run over 4 ranks with 4096 oversampling.
+The time from file IO to end was 2.698868
+The time from after file IO to end was 2.690234
+
+*Number of points is 8388608 run over 8 ranks with 4096 oversampling.
+The time from file IO to end was 2.242740
+The time from after file IO to end was 2.235702
+
+*Number of points is 8388608 run over 16 ranks with 4096 oversampling.
+The time from file IO to end was 1.640981
+The time from after file IO to end was 1.634369
+
+*Number of points is 8388608 run over 32 ranks with 4096 oversampling.
+The time from file IO to end was 1.625762
+The time from after file IO to end was 1.617401
+
+*Number of points is 8388608 run over 64 ranks with 4096 oversampling.
+The time from file IO to end was 1.698189
+The time from after file IO to end was 1.687782
+
+BONUS:
+*Number of points is 8388608 run over 64 ranks with 64 oversampling.
+The time from file IO to end was 1.398832
+The time from after file IO to end was 1.390061
+
+
+
+
+
+SQUEEZE VALUES:
+*Number of points is 131072 run over 1 ranks with 64 oversampling.
+The time from file IO to end was 0.080863
+The time from after file IO to end was 0.078568
+
+*Number of points is 131072 run over 2 ranks with 32 oversampling.
+Rank 1's bin size is 67109
+Rank 0's bin size is 63963
+The time from file IO to end was 0.058662
+The time from after file IO to end was 0.056300
+
+*Number of points is 131072 run over 4 ranks with 16 oversampling.
+Rank 2's bin size is 31087
+Rank 3's bin size is 39508
+Rank 0's bin size is 17210
+Rank 1's bin size is 43267
+The time from file IO to end was 0.063915
+The time from after file IO to end was 0.050009
+
+*Number of points is 131072 run over 8 ranks with 8 oversampling.
+Rank 5's bin size is 4152
+Rank 6's bin size is 23349
+Rank 7's bin size is 21665
+Rank 0's bin size is 5075
+Rank 1's bin size is 13873
+Rank 2's bin size is 23870
+Rank 3's bin size is 18434
+Rank 4's bin size is 20654
+The time from file IO to end was 0.072595
+The time from after file IO to end was 0.056447
+
+*Number of points is 131072 run over 16 ranks with 4 oversampling.
+Rank 7's bin size is 6365
+Rank 8's bin size is 2835
+Rank 9's bin size is 4232
+Rank 10's bin size is 8913
+Rank 11's bin size is 10129
+Rank 12's bin size is 3582
+Rank 13's bin size is 6473
+Rank 14's bin size is 5981
+Rank 15's bin size is 8090
+Rank 0's bin size is 6337
+Rank 1's bin size is 12740
+Rank 2's bin size is 8939
+Rank 4's bin size is 21055
+Rank 5's bin size is 9266
+Rank 6's bin size is 12375
+Rank 3's bin size is 3760
+The time from file IO to end was 0.042085
+The time from after file IO to end was 0.037648
+
+*Number of points is 131072 run over 32 ranks with 2 oversampling.
+Rank 16's bin size is 3094
+Rank 17's bin size is 7835
+Rank 18's bin size is 1042
+Rank 19's bin size is 5238
+Rank 20's bin size is 920
+Rank 21's bin size is 1370
+Rank 22's bin size is 3791
+Rank 23's bin size is 7954
+Rank 24's bin size is 8270
+Rank 25's bin size is 941
+Rank 26's bin size is 547
+Rank 27's bin size is 2563
+Rank 28's bin size is 8174
+Rank 29's bin size is 2777
+Rank 30's bin size is 1048
+Rank 31's bin size is 10606
+Rank 0's bin size is 2058
+Rank 1's bin size is 1557
+Rank 2's bin size is 1057
+Rank 3's bin size is 3981
+Rank 4's bin size is 2320
+Rank 5's bin size is 7975
+Rank 6's bin size is 692
+Rank 7's bin size is 5136
+Rank 8's bin size is 2690
+Rank 9's bin size is 4310
+Rank 10's bin size is 6344
+Rank 11's bin size is 2846
+Rank 12's bin size is 3784
+Rank 13's bin size is 9238
+Rank 14's bin size is 3441
+Rank 15's bin size is 7473
+The time from file IO to end was 0.038511
+The time from after file IO to end was 0.031410
+
+*Number of points is 131072 run over 64 ranks with 1 oversampling.
+Rank 4's bin size is 220
+Rank 5's bin size is 705
+Rank 6's bin size is 352
+Rank 7's bin size is 1143
+Rank 8's bin size is 2838
+Rank 9's bin size is 892
+Rank 10's bin size is 1729
+Rank 11's bin size is 1971
+Rank 12's bin size is 705
+Rank 13's bin size is 4998
+Rank 14's bin size is 129
+Rank 15's bin size is 1042
+Rank 16's bin size is 3923
+Rank 17's bin size is 734
+Rank 18's bin size is 225
+Rank 19's bin size is 187
+Rank 20's bin size is 1712
+Rank 21's bin size is 566
+Rank 22's bin size is 1351
+Rank 23's bin size is 1671
+Rank 24's bin size is 1288
+Rank 25's bin size is 3573
+Rank 26's bin size is 2283
+Rank 27's bin size is 488
+Rank 28's bin size is 3127
+Rank 29's bin size is 2981
+Rank 30's bin size is 3160
+Rank 31's bin size is 443
+Rank 0's bin size is 78
+Rank 2's bin size is 222
+Rank 3's bin size is 1337
+Rank 1's bin size is 1758
+Rank 43's bin size is 4941
+Rank 44's bin size is 3570
+Rank 45's bin size is 834
+Rank 46's bin size is 727
+Rank 47's bin size is 729
+Rank 48's bin size is 2627
+Rank 49's bin size is 1066
+Rank 50's bin size is 1271
+Rank 51's bin size is 7182
+Rank 52's bin size is 4909
+Rank 53's bin size is 2960
+Rank 54's bin size is 941
+Rank 55's bin size is 200
+Rank 56's bin size is 533
+Rank 57's bin size is 856
+Rank 58's bin size is 1186
+Rank 59's bin size is 5488
+Rank 60's bin size is 3381
+Rank 61's bin size is 3112
+Rank 62's bin size is 1451
+Rank 63's bin size is 9508
+Rank 32's bin size is 5000
+Rank 33's bin size is 4458
+Rank 34's bin size is 870
+Rank 35's bin size is 5653
+Rank 37's bin size is 1048
+Rank 39's bin size is 454
+Rank 40's bin size is 3428
+Rank 41's bin size is 192
+Rank 42's bin size is 2039
+Rank 36's bin size is 42
+Rank 38's bin size is 2585
+The time from file IO to end was 0.044942
+The time from after file IO to end was 0.025570
+
+
+
+
+
+*Number of points is 262144 run over 1 ranks with 128 oversampling.
+The time from file IO to end was 0.171297
+The time from after file IO to end was 0.168893
+
+*Number of points is 262144 run over 2 ranks with 64 oversampling.
+Rank 1's bin size is 132445
+Rank 0's bin size is 129699
+The time from file IO to end was 0.119036
+The time from after file IO to end was 0.116430
+
+*Number of points is 262144 run over 4 ranks with 32 oversampling.
+Rank 2's bin size is 57346
+Rank 3's bin size is 59221
+Rank 0's bin size is 81570
+Rank 1's bin size is 64007
+The time from file IO to end was 0.092595
+The time from after file IO to end was 0.089841
+
+*Number of points is 262144 run over 8 ranks with 16 oversampling.
+Rank 3's bin size is 32802
+Rank 4's bin size is 33813
+Rank 5's bin size is 43961
+Rank 6's bin size is 32291
+Rank 7's bin size is 31391
+Rank 0's bin size is 31652
+Rank 1's bin size is 29958
+Rank 2's bin size is 26276
+The time from file IO to end was 0.068614
+The time from after file IO to end was 0.065431
+
+*Number of points is 262144 run over 16 ranks with 8 oversampling.
+Rank 14's bin size is 12010
+Rank 15's bin size is 13185
+Rank 0's bin size is 12251
+Rank 1's bin size is 21495
+Rank 2's bin size is 18469
+Rank 3's bin size is 11455
+Rank 4's bin size is 21605
+Rank 5's bin size is 13609
+Rank 6's bin size is 21778
+Rank 7's bin size is 15822
+Rank 8's bin size is 8217
+Rank 9's bin size is 13235
+Rank 10's bin size is 26665
+Rank 11's bin size is 28002
+Rank 12's bin size is 10386
+Rank 13's bin size is 13960
+The time from file IO to end was 0.058421
+The time from after file IO to end was 0.054122
+
+*Number of points is 262144 run over 32 ranks with 4 oversampling.
+Rank 17's bin size is 4898
+Rank 18's bin size is 6271
+Rank 19's bin size is 9695
+Rank 20's bin size is 11688
+Rank 21's bin size is 9949
+Rank 22's bin size is 13596
+Rank 23's bin size is 8133
+Rank 24's bin size is 5130
+Rank 25's bin size is 4708
+Rank 26's bin size is 5998
+Rank 27's bin size is 13267
+Rank 28's bin size is 8994
+Rank 29's bin size is 14150
+Rank 30's bin size is 1843
+Rank 31's bin size is 11539
+Rank 0's bin size is 18549
+Rank 1's bin size is 6453
+Rank 2's bin size is 6629
+Rank 3's bin size is 8862
+Rank 4's bin size is 6731
+Rank 5's bin size is 9678
+Rank 6's bin size is 2479
+Rank 7's bin size is 5043
+Rank 8's bin size is 8883
+Rank 9's bin size is 3471
+Rank 10's bin size is 11056
+Rank 11's bin size is 14746
+Rank 12's bin size is 11425
+Rank 13's bin size is 3218
+Rank 14's bin size is 8978
+Rank 15's bin size is 2501
+Rank 16's bin size is 3583
+The time from file IO to end was 0.072027
+The time from after file IO to end was 0.064594
+
+*Number of points is 262144 run over 64 ranks with 2 oversampling.
+Rank 18's bin size is 3836
+Rank 19's bin size is 3877
+Rank 20's bin size is 9709
+Rank 21's bin size is 990
+Rank 22's bin size is 10252
+Rank 23's bin size is 600
+Rank 24's bin size is 2871
+Rank 25's bin size is 728
+Rank 26's bin size is 6500
+Rank 27's bin size is 7856
+Rank 28's bin size is 4069
+Rank 29's bin size is 3461
+Rank 30's bin size is 7782
+Rank 31's bin size is 969
+Rank 0's bin size is 1919
+Rank 3's bin size is 6202
+Rank 4's bin size is 2196
+Rank 5's bin size is 3255
+Rank 6's bin size is 1090
+Rank 7's bin size is 365
+Rank 8's bin size is 2330
+Rank 9's bin size is 4540
+Rank 10's bin size is 2526
+Rank 11's bin size is 4423
+Rank 12's bin size is 3752
+Rank 13's bin size is 3382
+Rank 14's bin size is 5548
+Rank 15's bin size is 2593
+Rank 16's bin size is 1815
+Rank 17's bin size is 1566
+Rank 1's bin size is 13707
+Rank 2's bin size is 2461
+Rank 58's bin size is 7058
+Rank 59's bin size is 3248
+Rank 60's bin size is 3498
+Rank 61's bin size is 1522
+Rank 62's bin size is 3520
+Rank 63's bin size is 3452
+Rank 32's bin size is 3053
+Rank 33's bin size is 2613
+Rank 34's bin size is 2426
+Rank 35's bin size is 14882
+Rank 36's bin size is 4105
+Rank 37's bin size is 6732
+Rank 38's bin size is 281
+Rank 39's bin size is 3575
+Rank 40's bin size is 2171
+Rank 41's bin size is 5695
+Rank 42's bin size is 1406
+Rank 43's bin size is 4450
+Rank 44's bin size is 3960
+Rank 45's bin size is 8604
+Rank 46's bin size is 5905
+Rank 47's bin size is 2203
+Rank 48's bin size is 3865
+Rank 49's bin size is 1134
+Rank 50's bin size is 6778
+Rank 51's bin size is 253
+Rank 52's bin size is 1052
+Rank 53's bin size is 4846
+Rank 54's bin size is 5830
+Rank 55's bin size is 2913
+Rank 56's bin size is 6307
+Rank 57's bin size is 7637
+The time from file IO to end was 0.077102
+The time from after file IO to end was 0.054225
+
+
+
+
+
+
+*Number of points is 524288 run over 1 ranks with 256 oversampling.
+The time from file IO to end was 0.343078
+The time from after file IO to end was 0.340130
+
+*Number of points is 524288 run over 2 ranks with 128 oversampling.
+Rank 0's bin size is 214577
+Rank 1's bin size is 309711
+The time from file IO to end was 0.261073
+The time from after file IO to end was 0.258093
+
+*Number of points is 524288 run over 4 ranks with 64 oversampling.
+Rank 1's bin size is 114928
+Rank 2's bin size is 140716
+Rank 3's bin size is 125992
+Rank 0's bin size is 142652
+The time from file IO to end was 0.171540
+The time from after file IO to end was 0.168584
+
+*Number of points is 524288 run over 16 ranks with 16 oversampling.
+Rank 13's bin size is 16915
+Rank 14's bin size is 22520
+Rank 15's bin size is 47683
+Rank 0's bin size is 27662
+Rank 2's bin size is 22642
+Rank 3's bin size is 41204
+Rank 4's bin size is 31912
+Rank 5's bin size is 22908
+Rank 6's bin size is 36017
+Rank 7's bin size is 22796
+Rank 8's bin size is 47843
+Rank 9's bin size is 29272
+Rank 10's bin size is 37604
+Rank 11's bin size is 38332
+Rank 12's bin size is 43367
+Rank 1's bin size is 35611
+The time from file IO to end was 0.103998
+The time from after file IO to end was 0.099600
+
+*Number of points is 524288 run over 32 ranks with 8 oversampling.
+Rank 2's bin size is 8221
+Rank 3's bin size is 18444
+Rank 4's bin size is 23896
+Rank 5's bin size is 18575
+Rank 6's bin size is 6021
+Rank 7's bin size is 27696
+Rank 8's bin size is 14825
+Rank 9's bin size is 13631
+Rank 10's bin size is 6052
+Rank 11's bin size is 14110
+Rank 12's bin size is 20039
+Rank 13's bin size is 7804
+Rank 14's bin size is 16259
+Rank 15's bin size is 15004
+Rank 16's bin size is 18086
+Rank 17's bin size is 6119
+Rank 18's bin size is 21341
+Rank 19's bin size is 14872
+Rank 20's bin size is 12659
+Rank 21's bin size is 21560
+Rank 22's bin size is 22966
+Rank 23's bin size is 22437
+Rank 24's bin size is 15991
+Rank 25's bin size is 11766
+Rank 26's bin size is 21650
+Rank 27's bin size is 9067
+Rank 28's bin size is 14036
+Rank 29's bin size is 19689
+Rank 30's bin size is 22096
+Rank 31's bin size is 18754
+Rank 0's bin size is 26981
+Rank 1's bin size is 13641
+The time from file IO to end was 0.120406
+The time from after file IO to end was 0.113697
+
+*Number of points is 524288 run over 64 ranks with 4 oversampling.
+Rank 23's bin size is 5026
+Rank 24's bin size is 6904
+Rank 25's bin size is 12547
+Rank 26's bin size is 5736
+Rank 27's bin size is 4164
+Rank 28's bin size is 11261
+Rank 29's bin size is 4163
+Rank 30's bin size is 7426
+Rank 31's bin size is 3602
+Rank 0's bin size is 15176
+Rank 3's bin size is 4685
+Rank 4's bin size is 6142
+Rank 5's bin size is 5264
+Rank 7's bin size is 7390
+Rank 8's bin size is 6895
+Rank 9's bin size is 5888
+Rank 11's bin size is 12090
+Rank 12's bin size is 11590
+Rank 13's bin size is 4317
+Rank 14's bin size is 9528
+Rank 15's bin size is 9763
+Rank 16's bin size is 12494
+Rank 17's bin size is 11875
+Rank 18's bin size is 7611
+Rank 19's bin size is 2912
+Rank 20's bin size is 7761
+Rank 21's bin size is 8207
+Rank 22's bin size is 3323
+Rank 1's bin size is 9730
+Rank 2's bin size is 11064
+Rank 6's bin size is 13283
+Rank 10's bin size is 5666
+Rank 45's bin size is 3737
+Rank 46's bin size is 7968
+Rank 47's bin size is 4907
+Rank 48's bin size is 8133
+Rank 49's bin size is 3739
+Rank 50's bin size is 5002
+Rank 51's bin size is 13689
+Rank 52's bin size is 5517
+Rank 53's bin size is 7572
+Rank 54's bin size is 11491
+Rank 55's bin size is 9799
+Rank 56's bin size is 11039
+Rank 57's bin size is 5493
+Rank 58's bin size is 11197
+Rank 59's bin size is 15149
+Rank 60's bin size is 10591
+Rank 61's bin size is 10825
+Rank 62's bin size is 9331
+Rank 63's bin size is 7265
+Rank 32's bin size is 6691
+Rank 33's bin size is 5391
+Rank 34's bin size is 15723
+Rank 35's bin size is 11324
+Rank 36's bin size is 12223
+Rank 37's bin size is 9264
+Rank 38's bin size is 7864
+Rank 39's bin size is 7890
+Rank 40's bin size is 3591
+Rank 41's bin size is 8246
+Rank 42's bin size is 5298
+Rank 43's bin size is 5502
+Rank 44's bin size is 9354
+The time from file IO to end was 0.117604
+The time from after file IO to end was 0.094645
+
+
+*Number of points is 1048576 run over 1 ranks with 512 oversampling.
+The time from file IO to end was 0.708434
+The time from after file IO to end was 0.704595
+
+*Number of points is 1048576 run over 2 ranks with 256 oversampling.
+Rank 0's bin size is 526957
+Rank 1's bin size is 521619
+The time from file IO to end was 0.525732
+The time from after file IO to end was 0.522229
+
+*Number of points is 1048576 run over 4 ranks with 128 oversampling.
+Rank 0's bin size is 250220
+Rank 1's bin size is 279394
+Rank 2's bin size is 263801
+Rank 3's bin size is 255161
+The time from file IO to end was 0.340359
+The time from after file IO to end was 0.337120
+
+*Number of points is 1048576 run over 8 ranks with 64 oversampling.
+Rank 3's bin size is 138558
+Rank 4's bin size is 138021
+Rank 5's bin size is 130172
+Rank 6's bin size is 112808
+Rank 7's bin size is 138610
+Rank 0's bin size is 98324
+Rank 1's bin size is 111647
+Rank 2's bin size is 180436
+The time from file IO to end was 0.267661
+The time from after file IO to end was 0.263860
+
+*Number of points is 1048576 run over 16 ranks with 32 oversampling.
+Rank 15's bin size is 75157
+Rank 0's bin size is 47382
+Rank 6's bin size is 65748
+Rank 7's bin size is 72471
+Rank 8's bin size is 73725
+Rank 9's bin size is 66932
+Rank 10's bin size is 55910
+Rank 12's bin size is 50376
+Rank 13's bin size is 76629
+Rank 14's bin size is 84702
+Rank 11's bin size is 53683
+Rank 1's bin size is 62378
+Rank 2's bin size is 52923
+Rank 3's bin size is 64676
+Rank 4's bin size is 63541
+Rank 5's bin size is 82343
+The time from file IO to end was 0.231874
+The time from after file IO to end was 0.226233
+
+*Number of points is 1048576 run over 32 ranks with 16 oversampling.
+Rank 8's bin size is 38356
+Rank 9's bin size is 38631
+Rank 10's bin size is 28245
+Rank 11's bin size is 26600
+Rank 12's bin size is 21876
+Rank 13's bin size is 33280
+Rank 14's bin size is 48861
+Rank 15's bin size is 38151
+Rank 16's bin size is 28032
+Rank 17's bin size is 27405
+Rank 18's bin size is 27343
+Rank 19's bin size is 37189
+Rank 20's bin size is 33259
+Rank 21's bin size is 53953
+Rank 22's bin size is 55751
+Rank 23's bin size is 24289
+Rank 24's bin size is 26488
+Rank 25's bin size is 25907
+Rank 26's bin size is 32175
+Rank 27's bin size is 23955
+Rank 28's bin size is 40337
+Rank 29's bin size is 38613
+Rank 30's bin size is 28558
+Rank 31's bin size is 40633
+Rank 0's bin size is 25552
+Rank 1's bin size is 25948
+Rank 2's bin size is 30930
+Rank 3's bin size is 23369
+Rank 4's bin size is 24816
+Rank 5's bin size is 33684
+Rank 6's bin size is 32106
+Rank 7's bin size is 34284
+The time from file IO to end was 0.228158
+The time from after file IO to end was 0.206953
+
+*Number of points is 1048576 run over 64 ranks with 8 oversampling.
+Rank 31's bin size is 8019
+Rank 0's bin size is 22159
+Rank 1's bin size is 15772
+Rank 2's bin size is 18808
+Rank 3's bin size is 13131
+Rank 4's bin size is 14770
+Rank 5's bin size is 20476
+Rank 6's bin size is 11382
+Rank 7's bin size is 21726
+Rank 8's bin size is 22024
+Rank 9's bin size is 21438
+Rank 10's bin size is 14943
+Rank 11's bin size is 14828
+Rank 12's bin size is 18695
+Rank 13's bin size is 10819
+Rank 14's bin size is 15989
+Rank 15's bin size is 16756
+Rank 16's bin size is 14161
+Rank 17's bin size is 12717
+Rank 18's bin size is 16401
+Rank 19's bin size is 18051
+Rank 20's bin size is 16830
+Rank 21's bin size is 16169
+Rank 22's bin size is 24901
+Rank 23's bin size is 24018
+Rank 24's bin size is 22903
+Rank 25's bin size is 20428
+Rank 26's bin size is 16115
+Rank 27's bin size is 6001
+Rank 28's bin size is 6355
+Rank 29's bin size is 6958
+Rank 30's bin size is 18367
+Rank 39's bin size is 16561
+Rank 40's bin size is 10911
+Rank 41's bin size is 4280
+Rank 42's bin size is 15538
+Rank 43's bin size is 19406
+Rank 44's bin size is 15166
+Rank 45's bin size is 30160
+Rank 46's bin size is 13947
+Rank 47's bin size is 16437
+Rank 48's bin size is 17112
+Rank 49's bin size is 27024
+Rank 50's bin size is 13568
+Rank 51's bin size is 9679
+Rank 52's bin size is 9330
+Rank 53's bin size is 12326
+Rank 54's bin size is 24894
+Rank 55's bin size is 25370
+Rank 56's bin size is 22647
+Rank 57's bin size is 27854
+Rank 58's bin size is 11969
+Rank 59's bin size is 14992
+Rank 60's bin size is 11744
+Rank 61's bin size is 14652
+Rank 62's bin size is 9025
+Rank 63's bin size is 17670
+Rank 32's bin size is 9922
+Rank 33's bin size is 16576
+Rank 34's bin size is 22146
+Rank 35's bin size is 11288
+Rank 36's bin size is 19845
+Rank 37's bin size is 20935
+Rank 38's bin size is 13492
+The time from file IO to end was 0.192568
+The time from after file IO to end was 0.171530
+
+
+
+
+
+
+
+
+*Number of points is 2097152 run over 1 ranks with 1024 oversampling.
+The time from file IO to end was 1.477134
+The time from after file IO to end was 1.470908
+
+*Number of points is 2097152 run over 2 ranks with 512 oversampling.
+Rank 1's bin size is 1042724
+Rank 0's bin size is 1054428
+The time from file IO to end was 1.000892
+The time from after file IO to end was 0.996491
+
+*Number of points is 2097152 run over 4 ranks with 256 oversampling.
+Rank 1's bin size is 539426
+Rank 2's bin size is 522818
+Rank 3's bin size is 530424
+Rank 0's bin size is 504484
+The time from file IO to end was 0.664075
+The time from after file IO to end was 0.659772
+
+*Number of points is 2097152 run over 8 ranks with 128 oversampling.
+Rank 4's bin size is 278876
+Rank 5's bin size is 276664
+Rank 6's bin size is 254757
+Rank 7's bin size is 250559
+Rank 0's bin size is 237556
+Rank 1's bin size is 260044
+Rank 2's bin size is 267667
+Rank 3's bin size is 271029
+The time from file IO to end was 0.464509
+The time from after file IO to end was 0.460354
+
+*Number of points is 2097152 run over 16 ranks with 64 oversampling.
+Rank 2's bin size is 127174
+Rank 3's bin size is 128513
+Rank 4's bin size is 143458
+Rank 5's bin size is 123309
+Rank 6's bin size is 132101
+Rank 7's bin size is 127106
+Rank 8's bin size is 132157
+Rank 9's bin size is 125682
+Rank 10's bin size is 166826
+Rank 11's bin size is 168931
+Rank 12's bin size is 140130
+Rank 13's bin size is 105472
+Rank 14's bin size is 111353
+Rank 15's bin size is 107121
+Rank 0's bin size is 150762
+Rank 1's bin size is 107057
+The time from file IO to end was 0.397578
+The time from after file IO to end was 0.392712
+
+*Number of points is 2097152 run over 32 ranks with 32 oversampling.
+Rank 1's bin size is 70895
+Rank 2's bin size is 73489
+Rank 3's bin size is 59709
+Rank 4's bin size is 48786
+Rank 5's bin size is 54393
+Rank 6's bin size is 81057
+Rank 7's bin size is 51885
+Rank 8's bin size is 85335
+Rank 9's bin size is 58006
+Rank 10's bin size is 68134
+Rank 11's bin size is 77018
+Rank 12's bin size is 61291
+Rank 13's bin size is 45802
+Rank 14's bin size is 67399
+Rank 15's bin size is 78347
+Rank 16's bin size is 50733
+Rank 17's bin size is 61889
+Rank 18's bin size is 73821
+Rank 19's bin size is 61351
+Rank 20's bin size is 60324
+Rank 21's bin size is 40022
+Rank 22's bin size is 47247
+Rank 23's bin size is 81952
+Rank 24's bin size is 69681
+Rank 25's bin size is 76271
+Rank 26's bin size is 63915
+Rank 27's bin size is 90843
+Rank 28's bin size is 69619
+Rank 29's bin size is 87585
+Rank 30's bin size is 77619
+Rank 31's bin size is 40278
+Rank 0's bin size is 62456
+The time from file IO to end was 0.380267
+The time from after file IO to end was 0.372686
+
+*Number of points is 2097152 run over 64 ranks with 16 oversampling.
+Rank 19's bin size is 32599
+Rank 20's bin size is 25768
+Rank 21's bin size is 19470
+Rank 22's bin size is 25420
+Rank 23's bin size is 29383
+Rank 24's bin size is 37789
+Rank 25's bin size is 31971
+Rank 26's bin size is 30994
+Rank 27's bin size is 43580
+Rank 28's bin size is 34245
+Rank 29's bin size is 34881
+Rank 30's bin size is 28371
+Rank 31's bin size is 55031
+Rank 0's bin size is 33810
+Rank 1's bin size is 39013
+Rank 2's bin size is 44145
+Rank 3's bin size is 32247
+Rank 4's bin size is 29336
+Rank 5's bin size is 29806
+Rank 6's bin size is 31740
+Rank 7's bin size is 43574
+Rank 8's bin size is 37746
+Rank 9's bin size is 28174
+Rank 10's bin size is 24805
+Rank 11's bin size is 32485
+Rank 12's bin size is 32917
+Rank 13's bin size is 35309
+Rank 14's bin size is 34349
+Rank 15's bin size is 33029
+Rank 16's bin size is 30703
+Rank 17's bin size is 30502
+Rank 18's bin size is 33855
+Rank 54's bin size is 32115
+Rank 55's bin size is 31710
+Rank 56's bin size is 19448
+Rank 57's bin size is 24934
+Rank 58's bin size is 37360
+Rank 59's bin size is 43286
+Rank 60's bin size is 19912
+Rank 61's bin size is 34333
+Rank 62's bin size is 43455
+Rank 63's bin size is 35693
+Rank 32's bin size is 49179
+Rank 33's bin size is 23323
+Rank 34's bin size is 29331
+Rank 35's bin size is 20039
+Rank 36's bin size is 31152
+Rank 37's bin size is 35639
+Rank 38's bin size is 30496
+Rank 39's bin size is 27342
+Rank 40's bin size is 37537
+Rank 41's bin size is 40725
+Rank 42's bin size is 37510
+Rank 43's bin size is 28053
+Rank 44's bin size is 40108
+Rank 45's bin size is 25442
+Rank 46's bin size is 40144
+Rank 47's bin size is 24818
+Rank 48's bin size is 28242
+Rank 49's bin size is 27082
+Rank 50's bin size is 24136
+Rank 51's bin size is 44707
+Rank 52's bin size is 28960
+Rank 53's bin size is 33894
+The time from file IO to end was 0.402204
+The time from after file IO to end was 0.376420
+
+*Number of points is 4194304 run over 1 ranks with 2048 oversampling.
+The time from file IO to end was 3.018881
+The time from after file IO to end was 3.004002
+
+*Number of points is 4194304 run over 2 ranks with 1024 oversampling.
+Rank 1's bin size is 2138519
+Rank 0's bin size is 2055785
+The time from file IO to end was 2.019057
+The time from after file IO to end was 2.011605
+
+*Number of points is 4194304 run over 4 ranks with 512 oversampling.
+Rank 1's bin size is 1089960
+Rank 2's bin size is 1032722
+Rank 3's bin size is 1015085
+Rank 0's bin size is 1056537
+The time from file IO to end was 1.374201
+The time from after file IO to end was 1.356907
+
+*Number of points is 4194304 run over 8 ranks with 256 oversampling.
+Rank 4's bin size is 548440
+Rank 5's bin size is 509934
+Rank 6's bin size is 539619
+Rank 7's bin size is 562170
+Rank 0's bin size is 456503
+Rank 1's bin size is 540200
+Rank 2's bin size is 549454
+Rank 3's bin size is 487984
+The time from file IO to end was 1.025578
+The time from after file IO to end was 1.013632
+
+*Number of points is 4194304 run over 16 ranks with 128 oversampling.
+Rank 1's bin size is 239822
+Rank 2's bin size is 238118
+Rank 3's bin size is 239365
+Rank 4's bin size is 299929
+Rank 5's bin size is 258334
+Rank 6's bin size is 298498
+Rank 7's bin size is 274056
+Rank 8's bin size is 260142
+Rank 9's bin size is 213212
+Rank 10's bin size is 299759
+Rank 11's bin size is 254941
+Rank 12's bin size is 268343
+Rank 13's bin size is 274057
+Rank 14's bin size is 240535
+Rank 15's bin size is 260663
+Rank 0's bin size is 274530
+The time from file IO to end was 0.978266
+The time from after file IO to end was 0.967150
+
+*Number of points is 4194304 run over 32 ranks with 64 oversampling.
+Rank 17's bin size is 136221
+Rank 18's bin size is 131355
+Rank 19's bin size is 121352
+Rank 20's bin size is 134930
+Rank 21's bin size is 124703
+Rank 22's bin size is 109045
+Rank 23's bin size is 154418
+Rank 24's bin size is 116570
+Rank 25's bin size is 127419
+Rank 26's bin size is 128319
+Rank 27's bin size is 131601
+Rank 28's bin size is 131158
+Rank 29's bin size is 124522
+Rank 30's bin size is 134549
+Rank 31's bin size is 153582
+Rank 0's bin size is 123638
+Rank 1's bin size is 114223
+Rank 2's bin size is 102228
+Rank 3's bin size is 154684
+Rank 4's bin size is 150398
+Rank 5's bin size is 127091
+Rank 6's bin size is 112643
+Rank 7's bin size is 109774
+Rank 8's bin size is 153205
+Rank 9's bin size is 114878
+Rank 10's bin size is 134802
+Rank 11's bin size is 142336
+Rank 12's bin size is 117147
+Rank 13's bin size is 127452
+Rank 14's bin size is 127179
+Rank 15's bin size is 152868
+Rank 16's bin size is 170014
+The time from file IO to end was 1.149033
+The time from after file IO to end was 1.128466
+
+*Number of points is 4194304 run over 64 ranks with 32 oversampling.
+Rank 12's bin size is 78485
+Rank 13's bin size is 71253
+Rank 14's bin size is 62653
+Rank 15's bin size is 94738
+Rank 16's bin size is 60107
+Rank 17's bin size is 80168
+Rank 18's bin size is 63016
+Rank 19's bin size is 55465
+Rank 20's bin size is 67924
+Rank 21's bin size is 69415
+Rank 22's bin size is 80076
+Rank 23's bin size is 57124
+Rank 24's bin size is 62378
+Rank 25's bin size is 54427
+Rank 26's bin size is 66777
+Rank 27's bin size is 75087
+Rank 28's bin size is 46862
+Rank 29's bin size is 59919
+Rank 30's bin size is 51029
+Rank 31's bin size is 77816
+Rank 0's bin size is 74037
+Rank 1's bin size is 53061
+Rank 2's bin size is 76633
+Rank 3's bin size is 55215
+Rank 4's bin size is 54847
+Rank 5's bin size is 46979
+Rank 6's bin size is 50316
+Rank 7's bin size is 63679
+Rank 8's bin size is 65149
+Rank 9's bin size is 90233
+Rank 10's bin size is 64113
+Rank 11's bin size is 86678
+Rank 63's bin size is 67981
+Rank 32's bin size is 80705
+Rank 33's bin size is 71410
+Rank 34's bin size is 102019
+Rank 35's bin size is 66608
+Rank 36's bin size is 69712
+Rank 37's bin size is 50861
+Rank 38's bin size is 83345
+Rank 39's bin size is 53177
+Rank 40's bin size is 54987
+Rank 41's bin size is 74692
+Rank 42's bin size is 74119
+Rank 43's bin size is 62692
+Rank 44's bin size is 71408
+Rank 45's bin size is 66772
+Rank 46's bin size is 66154
+Rank 47's bin size is 53683
+Rank 48's bin size is 60333
+Rank 49's bin size is 54015
+Rank 50's bin size is 58803
+Rank 51's bin size is 50890
+Rank 52's bin size is 53896
+Rank 53's bin size is 51803
+Rank 54's bin size is 74463
+Rank 55's bin size is 62309
+Rank 56's bin size is 67711
+Rank 57's bin size is 76095
+Rank 58's bin size is 51085
+Rank 59's bin size is 79055
+Rank 60's bin size is 45718
+Rank 61's bin size is 56524
+Rank 62's bin size is 65620
+The time from file IO to end was 0.725183
+The time from after file IO to end was 0.710307
+
+*Number of points is 8388608 run over 1 ranks with 4096 oversampling.
+The time from file IO to end was 6.223764
+The time from after file IO to end was 6.196973
+
+*Number of points is 8388608 run over 2 ranks with 2048 oversampling.
+Rank 1's bin size is 4159853
+Rank 0's bin size is 4228755
+The time from file IO to end was 4.134840
+The time from after file IO to end was 4.123669
+
+*Number of points is 8388608 run over 4 ranks with 1024 oversampling.
+Rank 1's bin size is 2013499
+Rank 2's bin size is 2111069
+Rank 3's bin size is 2115640
+Rank 0's bin size is 2148400
+The time from file IO to end was 2.774840
+The time from after file IO to end was 2.766946
+
+*Number of points is 8388608 run over 8 ranks with 512 oversampling.
+Rank 2's bin size is 1057650
+Rank 3's bin size is 1012090
+Rank 4's bin size is 1037323
+Rank 5's bin size is 1120173
+Rank 6's bin size is 1077192
+Rank 7's bin size is 1036926
+Rank 0's bin size is 998503
+Rank 1's bin size is 1048751
+The time from file IO to end was 1.946468
+The time from after file IO to end was 1.940474
+
+*Number of points is 8388608 run over 16 ranks with 256 oversampling.
+Rank 15's bin size is 556908
+Rank 0's bin size is 474110
+Rank 1's bin size is 518973
+Rank 2's bin size is 533695
+Rank 3's bin size is 529447
+Rank 4's bin size is 554123
+Rank 5's bin size is 529429
+Rank 6's bin size is 549953
+Rank 7's bin size is 530334
+Rank 8's bin size is 528636
+Rank 9's bin size is 526442
+Rank 10's bin size is 462268
+Rank 11's bin size is 601785
+Rank 12's bin size is 502878
+Rank 13's bin size is 470471
+Rank 14's bin size is 519156
+The time from file IO to end was 1.716743
+The time from after file IO to end was 1.697058
+
+*Number of points is 8388608 run over 32 ranks with 128 oversampling.
+Rank 26's bin size is 230961
+Rank 27's bin size is 233791
+Rank 28's bin size is 261250
+Rank 29's bin size is 291221
+Rank 30's bin size is 280131
+Rank 31's bin size is 272171
+Rank 0's bin size is 242416
+Rank 1's bin size is 258186
+Rank 2's bin size is 247416
+Rank 3's bin size is 260916
+Rank 4's bin size is 251717
+Rank 5's bin size is 257072
+Rank 6's bin size is 275168
+Rank 7's bin size is 229967
+Rank 8's bin size is 264677
+Rank 9's bin size is 277172
+Rank 10's bin size is 260307
+Rank 11's bin size is 276633
+Rank 12's bin size is 246420
+Rank 13's bin size is 252277
+Rank 14's bin size is 270470
+Rank 15's bin size is 270769
+Rank 16's bin size is 287571
+Rank 17's bin size is 277771
+Rank 18's bin size is 259620
+Rank 19's bin size is 263316
+Rank 20's bin size is 248809
+Rank 21's bin size is 279426
+Rank 22's bin size is 239072
+Rank 23's bin size is 284611
+Rank 24's bin size is 269860
+Rank 25's bin size is 267444
+The time from file IO to end was 1.488255
+The time from after file IO to end was 1.471755
+
+*Number of points is 8388608 run over 64 ranks with 64 oversampling.
+Rank 3's bin size is 103098
+Rank 4's bin size is 151377
+Rank 5's bin size is 131161
+Rank 6's bin size is 104951
+Rank 7's bin size is 140312
+Rank 8's bin size is 130245
+Rank 9's bin size is 144017
+Rank 10's bin size is 137186
+Rank 11's bin size is 159082
+Rank 12's bin size is 132577
+Rank 13's bin size is 115800
+Rank 14's bin size is 116898
+Rank 15's bin size is 109545
+Rank 16's bin size is 139557
+Rank 17's bin size is 137581
+Rank 18's bin size is 122842
+Rank 19's bin size is 152410
+Rank 20's bin size is 120273
+Rank 21's bin size is 142929
+Rank 22's bin size is 140582
+Rank 23's bin size is 122476
+Rank 24's bin size is 120351
+Rank 25's bin size is 150027
+Rank 26's bin size is 109907
+Rank 27's bin size is 116479
+Rank 28's bin size is 123315
+Rank 29's bin size is 117921
+Rank 30's bin size is 154625
+Rank 31's bin size is 146157
+Rank 0's bin size is 125750
+Rank 1's bin size is 132793
+Rank 2's bin size is 142197
+Rank 50's bin size is 136068
+Rank 51's bin size is 129397
+Rank 52's bin size is 112262
+Rank 53's bin size is 147381
+Rank 54's bin size is 138791
+Rank 55's bin size is 154720
+Rank 56's bin size is 125272
+Rank 57's bin size is 113772
+Rank 58's bin size is 122113
+Rank 59's bin size is 120124
+Rank 60's bin size is 106915
+Rank 61's bin size is 163555
+Rank 62's bin size is 140715
+Rank 63's bin size is 112435
+Rank 32's bin size is 134964
+Rank 33's bin size is 135329
+Rank 34's bin size is 120714
+Rank 35's bin size is 124114
+Rank 36's bin size is 124922
+Rank 37's bin size is 122058
+Rank 38's bin size is 148383
+Rank 39's bin size is 134332
+Rank 40's bin size is 141841
+Rank 41's bin size is 149543
+Rank 42's bin size is 123704
+Rank 43's bin size is 143908
+Rank 44's bin size is 112206
+Rank 45's bin size is 132291
+Rank 46's bin size is 122659
+Rank 47's bin size is 131813
+Rank 48's bin size is 127427
+Rank 49's bin size is 140459
+The time from file IO to end was 1.360407
+The time from after file IO to end was 1.351688
+
+WITH FILE IO:
+12.810923 for 1 ranks for 16777216 total points.
+9.139852 for 2 ranks for 16777216 total points.
+5.920447 for 4 ranks for 16777216 total points.
+4.416389 for 8 ranks for 16777216 total points.
+3.439084 for 16 ranks for 16777216 total points.
+3.952685 for 32 ranks for 16777216 total points.
+2.610974 for 64 ranks for 16777216 total points.
+
+26.594957 for 1 ranks for 33554432 total points.
+19.498744 for 2 ranks for 33554432 total points.
+12.956029 for 4 ranks for 33554432 total points.
+8.535907 for 8 ranks for 33554432 total points.
+6.489768 for 16 ranks for 33554432 total points.
+5.576872 for 32 ranks for 33554432 total points.
+5.031965 for 64 ranks for 33554432 total points.
+
+54.059729 for 1 ranks for 67108864 total points.
+36.315618 for 2 ranks for 67108864 total points.
+23.796694 for 4 ranks for 67108864 total points.
+17.247273 for 8 ranks for 67108864 total points.
+12.971624 for 16 ranks for 67108864 total points.
+11.840213 for 32 ranks for 67108864 total points.
+9.636136 for 64 ranks for 67108864 total points.
+
+111.439280 for 1 ranks for 134217728 total points.
+72.778471 for 2 ranks for 134217728 total points.
+48.987769 for 4 ranks for 134217728 total points.
+34.525967 for 8 ranks for 134217728 total points.
+24.885204 for 16 ranks for 134217728 total points.
+21.486531 for 32 ranks for 134217728 total points.
+19.014872 for 64 ranks for 134217728 total points.
+
+150.981692 for 2 ranks for 268435456 total points.
+96.720256 for 4 ranks for 268435456 total points.
+67.711749 for 8 ranks for 268435456 total points.
+52.573132 for 16 ranks for 268435456 total points.
+44.112395 for 32 ranks for 268435456 total points.
+38.514846 for 64 ranks for 268435456 total points.
+
+468.105019 for 1 ranks for 536870912 total points.
+195.192520 for 4 ranks for 536870912 total points.
+139.119055 for 8 ranks for 536870912 total points.
+98.863373 for 16 ranks for 536870912 total points.
+88.636694 for 32 ranks for 536870912 total points.
+73.704687 for 64 ranks for 536870912 total points.
+
+950.285874 for 1 ranks for 1073741824 total points.
+728.124802 for 2 ranks for 1073741824 total points.
+284.651930 for 8 ranks for 1073741824 total points.
+215.485816 for 16 ranks for 1073741824 total points.
+177.741755 for 32 ranks for 1073741824 total points.
+152.338014 for 64 ranks for 1073741824 total points.
+
+
+WITHOUT FILE IO:
+12.779078 for 1 ranks for 16777216 total points.
+9.098372 for 2 ranks for 16777216 total points.
+5.881231 for 4 ranks for 16777216 total points.
+4.391536 for 8 ranks for 16777216 total points.
+3.421550 for 16 ranks for 16777216 total points.
+3.943395 for 32 ranks for 16777216 total points.
+2.602144 for 64 ranks for 16777216 total points.
+
+26.512627 for 1 ranks for 33554432 total points.
+19.449183 for 2 ranks for 33554432 total points.
+12.931608 for 4 ranks for 33554432 total points.
+8.518346 for 8 ranks for 33554432 total points.
+6.476745 for 16 ranks for 33554432 total points.
+5.566497 for 32 ranks for 33554432 total points.
+5.012265 for 64 ranks for 33554432 total points.
+
+53.912460 for 1 ranks for 67108864 total points.
+36.222003 for 2 ranks for 67108864 total points.
+23.745020 for 4 ranks for 67108864 total points.
+17.217128 for 8 ranks for 67108864 total points.
+12.928388 for 16 ranks for 67108864 total points.
+11.824893 for 32 ranks for 67108864 total points.
+9.599861 for 64 ranks for 67108864 total points.
+
+111.153990 for 1 ranks for 134217728 total points.
+72.594250 for 2 ranks for 134217728 total points.
+48.855093 for 4 ranks for 134217728 total points.
+34.451428 for 8 ranks for 134217728 total points.
+24.778064 for 16 ranks for 134217728 total points.
+21.408640 for 32 ranks for 134217728 total points.
+18.983511 for 64 ranks for 134217728 total points.
+
+150.571123 for 2 ranks for 268435456 total points.
+96.296542 for 4 ranks for 268435456 total points.
+67.604199 for 8 ranks for 268435456 total points.
+52.433589 for 16 ranks for 268435456 total points.
+44.050766 for 32 ranks for 268435456 total points.
+38.381850 for 64 ranks for 268435456 total points.
+
+466.838018 for 1 ranks for 536870912 total points.
+194.779112 for 4 ranks for 536870912 total points.
+138.792888 for 8 ranks for 536870912 total points.
+98.744499 for 16 ranks for 536870912 total points.
+88.405048 for 32 ranks for 536870912 total points.
+73.636046 for 64 ranks for 536870912 total points.
+
+947.908145 for 1 ranks for 1073741824 total points.
+725.699130 for 2 ranks for 1073741824 total points.
+283.894222 for 8 ranks for 1073741824 total points.
+214.942147 for 16 ranks for 1073741824 total points.
+177.465298 for 32 ranks for 1073741824 total points.
+152.008637 for 64 ranks for 1073741824 total points.

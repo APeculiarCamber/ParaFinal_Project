@@ -28,6 +28,8 @@ void createPointType() {
 extern void c_cudaAlloc(Point ** points, size_t numPoints);
 extern void c_callKernel(int numBlocks, int threadsCount, Point * p_data, size_t numPoints, int seed,
         float leftX, float lowerY, float rightX, float upperY);
+extern void c_callCircleKernel(int numBlocks, int threadsCount, Point * p_data, 
+        size_t numPoints, int seed, float radius);
 extern void setCudaDeviceByRank(int myrank);
 extern void freeCudaMemory(Point * p_data);
 
@@ -92,20 +94,29 @@ int main(int argc, char* argv[])
     createPointType();
     setCudaDeviceByRank(myrank);
 
-    if (argc < 7) {
+    if (argc != 4 && argc != 7) {
         if (myrank == 0)
-            printf("FORMAT: %s <num points per proc> <num threads> <left x> <lower y> <right x> <upper y>\n", argv[0]);
+            printf("FORMAT FOR SQUARE:\n\t%s <num points per proc> <num threads> <left x> <lower y> <right x> <upper y>\n", argv[0]);
+            printf("FORMAT FOR CIRCLE:\n\t%s <num points per proc> <num threads> <radius>\n", argv[0]);
         return false;
     }
+
+    // parse args
     size_t numPoints = 0;
     if (1 != sscanf(argv[1], "%zu", &numPoints))
         return false;
     int threadsCount = atoi(argv[2]);
-    float leftX = atof(argv[3]);
-    float lowerY = atof(argv[4]);
-    float rightX = atof(argv[5]);
-    float upperY = atof(argv[6]);
-    char sampleCircle = argc >= 8;
+    float leftX, lowerY, rightX, upperY, radius;
+    char sampleSquare = argc == 7;
+    if (sampleSquare) { 
+    	leftX = atof(argv[3]);
+    	lowerY = atof(argv[4]);
+    	rightX = atof(argv[5]);
+    	upperY = atof(argv[6]);
+	} else {
+		radius = atof(argv[3]);
+	}
+
     printf("Number elements for rank %d is %zu with %d threads.\n", myrank, numPoints, threadsCount);
     
     Point * p_data;
@@ -116,11 +127,16 @@ int main(int argc, char* argv[])
     size_t numBlocks = ((numPoints) + (threadsCount - 1)) / threadsCount;
     numBlocks = (numBlocks > 65535) ? 65535 : numBlocks;
     int seed = (10000 * myrank) + numranks;
-    c_callKernel(numBlocks, threadsCount, p_data, numPoints, seed,
-        leftX, lowerY, rightX, upperY);
+    if (sampleSquare) {
+    	c_callKernel(numBlocks, threadsCount, p_data, numPoints, seed,
+        	leftX, lowerY, rightX, upperY);
+	} else {
+		c_callCircleKernel(numBlocks, threadsCount, p_data, numPoints, seed,
+        	radius);
+	}
 
     writeToMPIFile(p_data, myrank, numranks, numPoints);
-/*
+
 #ifdef DEBUG
     for (int r = 0; r < numranks; ++r) {
         if (r == myrank) {
@@ -130,11 +146,8 @@ int main(int argc, char* argv[])
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    
-    printf("\n");
-    readFromMPIFile(myrank, numranks, numPoints);
 #endif
-*/
+
     freeCudaMemory(p_data);
     MPI_Finalize();
     return true;

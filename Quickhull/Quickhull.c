@@ -285,7 +285,7 @@ void reduceDist(DistPoint * p, int len) {
 
 void outputHull(Vector hull) {
     for (int p = 0; p < hull.size; ++p) {
-        printf("%.2f, %.2f\n", hull.pts[p].x, hull.pts[p].y);
+        printf("%.4f, %.4f\n", hull.pts[p].x, hull.pts[p].y);
     }
 }
 
