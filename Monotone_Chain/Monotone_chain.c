@@ -208,7 +208,8 @@ void reversePointsArray(Point * pts, int size) {
 }
 
 // The LEAD RANK, performs hull construction, calling each rank in sorted order
-Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int numranks, unsigned * hullSize) {
+Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int numranks, 
+	unsigned * hullSize, ticks * commTime) {
     int bottomCap, bottomSize;
     Point * bottomHull = vectorInit(&bottomCap, &bottomSize);
     int topCap, topSize;
@@ -217,6 +218,7 @@ Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int num
     Point * oldPoints;
     Point * currentPoints = NULL;
     Point * nextPoints = myPoints;
+    ticks start;
     unsigned int numPoints = myNumPoints;
     unsigned int nextNumPoints = myNumPoints;
     MPI_Request dataRequest;
@@ -229,8 +231,10 @@ Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int num
             // get the next array (will become the working array after this iteration)
             if (oldPoints) free(oldPoints);
             // get rank points size, THIS RECV UNBLOCKS AN MPI RANK, CAUSING IT TO SEND ALL ITS POINTS TO LEAD RANK
+            start = getticks();
             MPI_Recv(&nextNumPoints, 1, MPI_UNSIGNED, r + 1, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            *commTime += (getticks() - start);
             nextPoints = malloc(nextNumPoints * sizeof(Point));
             // non-blocking, let the rank send while we perform hull construction using the current array
             MPI_Irecv(nextPoints, nextNumPoints, MPI_POINT, r + 1, 0,
@@ -251,8 +255,11 @@ Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int num
         }
 
         // wait til we fully recieve the next ordered points set
-        if (r + 1 < numranks)
+        if (r + 1 < numranks) {
+        	start = getticks();
             MPI_Wait(&dataRequest, MPI_STATUS_IGNORE);
+            *commTime += (getticks() - start);
+        }
     }
     // top hull must be reversed
     reversePointsArray(topHull, topSize);
@@ -274,12 +281,13 @@ void prepareToSendToLeadRank(Point * myPoints, int numPoints, int myrank, int nu
 // Output times and results, store results in a file
 void outputResults(Point * hull, unsigned hullSize, 
     ticks startFromReadin, ticks startFromAlgo, ticks finishTime, int numranks,
-    size_t totalPoints) {
+    size_t totalPoints, ticks commTime) {
     printf("The time from file IO to end was %f for %d ranks for %zu total points.\n", 
         (double)(finishTime - startFromReadin) / CLOCK_RATE, numranks, totalPoints);
     printf("The time from after file IO to end was %f for %d ranks for %zu total points..\n", 
         (double)(finishTime - startFromAlgo) / CLOCK_RATE, numranks, totalPoints);
-
+    printf("The time spend on communication was %f for %d ranks for %zu total points.\n",
+    	(double)commTime / CLOCK_RATE, numranks, totalPoints);
     printf("The final size of the convex hull was: %u\n", hullSize);
 
 #ifdef DEBUG
@@ -294,16 +302,18 @@ void outputResults(Point * hull, unsigned hullSize,
 // WARNING : FREES THE POINTS ARRAY PASSED IN
 // WARNING : SHOULD NOT BE USED IF THERE IS ONLY 1 RANK
 Point * makeAndExchangeByPivots(Point * points, unsigned numPoints, unsigned oversampling,
-    int myrank, int numranks, size_t * outTotal) {
+    int myrank, int numranks, size_t * outTotal, ticks * commTime) {
     // get pivots
     Point * pivots = malloc(numranks * oversampling * sizeof(Point));
     Point * localPivots = malloc(oversampling * sizeof(Point));
     pickPivots(points, numPoints, localPivots, oversampling);
     // All Gather pivots
+    ticks start = getticks();
     int rc = MPI_Allgather(
         localPivots, oversampling, MPI_POINT, 
         pivots, oversampling, MPI_POINT, 
         MPI_COMM_WORLD);
+    *commTime += (getticks() - start);
     free(localPivots);
     // local sort all the gathered pivots
     localSort(pivots, numranks * oversampling);
@@ -320,8 +330,9 @@ Point * makeAndExchangeByPivots(Point * points, unsigned numPoints, unsigned ove
     // send respective bin sizes to others
     int * allMyBinSizes = malloc(numranks * sizeof(int));
     int * allMyBinDispl = malloc(numranks * sizeof(int));
+    start = getticks();
     MPI_Alltoall(sizes, 1, MPI_INT, allMyBinSizes, 1, MPI_INT, MPI_COMM_WORLD);
-
+    *commTime += (getticks() - start);
     // exhange bins with other processes
     size_t total = 0;
     for (int i = 0; i < numranks; i++) {
@@ -332,8 +343,10 @@ Point * makeAndExchangeByPivots(Point * points, unsigned numPoints, unsigned ove
     Point * myREALPoints = malloc(total * sizeof(Point));
     printf("Rank %d's bin size is %lu\n", myrank, total);
 
+    start = getticks();
     MPI_Alltoallv(bins, sizes, steps, MPI_POINT, myREALPoints,
                   allMyBinSizes, allMyBinDispl, MPI_POINT, MPI_COMM_WORLD);
+    *commTime += (getticks() - start);
     free(steps); free(sizes); free(bins);
     free(allMyBinDispl); free(allMyBinSizes);
     // sort my bin
@@ -354,6 +367,7 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numranks);
     createPointType();
+    ticks commTime = 0;
 
     size_t totalPoints = 0;
     if (1 != sscanf(argv[1], "%zu", &totalPoints))
@@ -376,7 +390,7 @@ int main(int argc, char* argv[])
     Point * myREALPoints = points;
     size_t total = numPoints;
     if (numranks > 1)
-        myREALPoints = makeAndExchangeByPivots(points, numPoints, oversampling, myrank, numranks, &total);
+        myREALPoints = makeAndExchangeByPivots(points, numPoints, oversampling, myrank, numranks, &total, &commTime);
     else
         localSort(myREALPoints, numPoints);
 
@@ -395,9 +409,11 @@ int main(int argc, char* argv[])
     // perform the monotone chain
     if (myrank == LEAD_RANK) {
         unsigned int hullSize;
-        Point * hull = performHullContstruction(myREALPoints, total, numranks, &hullSize);
+        Point * hull = performHullContstruction(myREALPoints, total, numranks, &hullSize, &commTime);
         ticks finishTime = getticks();
-        outputResults(hull, hullSize, startFromReadin, startFromAlgo, finishTime, numranks, totalPoints);
+        outputResults(hull, hullSize, 
+        	startFromReadin, startFromAlgo, finishTime, 
+        	numranks, totalPoints, commTime);
     } else {
         prepareToSendToLeadRank(myREALPoints, total, myrank, numranks);
     }
