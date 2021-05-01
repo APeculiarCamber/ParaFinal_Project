@@ -202,20 +202,22 @@ Point localJarvisMarch(Point * pts, int ptsSize, Point pivot) {
     return winning;
 }
 
-Point * performJarvisMarch(Point * pts, int ptsSize, int * hullSize, int myrank, int numranks) {
+Point * performJarvisMarch(Point * pts, int ptsSize, int * hullSize, 
+	int myrank, int numranks, ticks * commTime) {
 	
 	Point * rankWinners = (myrank == 0 ? malloc(numranks * sizeof(Point)) : NULL);
 
 	// get the furthest left point of ALL ranks
 	Point leftPoint = getFurthestLeft(pts, ptsSize);
+	ticks commStart = getticks();
 	MPI_Gather(&leftPoint, 1, MPI_POINT, rankWinners, 1, MPI_POINT, 0, MPI_COMM_WORLD);
+	*commTime += (getticks() - commStart);
 	if (myrank == 0) {
 		leftPoint = getFurthestLeft(rankWinners, numranks);
-#ifdef DEBUG 
-		printf("The left point is {%f, %f}\n", leftPoint.x, leftPoint.y); 
-#endif
 	}
+	commStart = getticks();
 	MPI_Bcast(&leftPoint, 1, MPI_POINT, 0, MPI_COMM_WORLD);
+	*commTime += (getticks() - commStart);
 
 	int hullCap;
 	Point * hull =  vectorInit(&hullCap, hullSize);
@@ -224,8 +226,9 @@ Point * performJarvisMarch(Point * pts, int ptsSize, int * hullSize, int myrank,
 	int i = 0;
 	do {
 		MPI_Barrier(MPI_COMM_WORLD);
-
+		commStart = getticks();
 		MPI_Bcast(&pivot, 1, MPI_POINT, 0, MPI_COMM_WORLD);
+		*commTime += (getticks() - commStart);
 		if (pointsEqual(pivot, leftPoint) && i != 0)  {
 			break; // this is functional as we only apply assignments, but cannot handle repeats
 		}
@@ -255,7 +258,7 @@ int main(int argc, char*argv[]){
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numranks);
 	createPointType();
-
+	ticks commTime = 0;
 	size_t totalPoints = 0;
 	if (1 != sscanf(argv[1], "%zu", &totalPoints))
 		return false;
@@ -282,6 +285,7 @@ int main(int argc, char*argv[]){
 	if (numranks == 1) { 
 		ticks End = getticks();
 		printf("The final time was %f\n", ((double)(End - start)) / CLOCK_RATE);
+		printf("The communication time was %f\n", (double)commTime / CLOCK_RATE);
 		printf("%llu to %llu\n", start, End);
 #ifdef DEBUG
 		if (myrank == 0) {
@@ -300,7 +304,9 @@ int main(int argc, char*argv[]){
 
 
 	// Gather subhull sizes so we can gather and then evenly scatter them
+	ticks commStart = getticks();
 	MPI_Gather(&subHullSize, 1, MPI_INT, hull_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	commTime += (getticks() - commStart);
 	int * disp_array = NULL;
 	Point * hull_gather = NULL;
 	size_t gather_size = 0;
@@ -323,10 +329,11 @@ int main(int argc, char*argv[]){
 	}
 
 	// Gather all subhulls to main process
+	commStart = getticks();
 	MPI_Gatherv(subhull, subHullSize, MPI_POINT, 
 		hull_gather, hull_sizes, disp_array, MPI_POINT, 
 		0, MPI_COMM_WORLD);
-
+	commTime += (getticks() - commStart);
 	// this gather_size / numranks will only function correctly for rank 1 so broadcast the result
 	int scatterSize = gather_size / numranks;
 	if (myrank == 0 && scatterSize == 0) {
@@ -335,12 +342,16 @@ int main(int argc, char*argv[]){
 		return 1;
 	}
 	// broadcast the scattered size, any stragglers will go to rank 0
+	commStart = getticks();
 	MPI_Bcast(&scatterSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	commTime += (getticks() - commStart);
 	// rank 0 getting extras in the division works best, rank0Bonus == 0 for all other ranks
 	int rank0Bonus = (myrank == 0) * (gather_size % numranks);
 	Point * scatteredPoints = malloc((scatterSize + rank0Bonus) * sizeof(Point));
+	commStart = getticks();
 	MPI_Scatter(hull_gather + rank0Bonus, scatterSize, MPI_POINT,
     scatteredPoints + rank0Bonus, scatterSize, MPI_POINT, 0, MPI_COMM_WORLD);
+    commTime += (getticks() - commStart);
     // apply the remaining bonus remainder points to rank 0
     for (int i = 0; i < rank0Bonus; ++i) {
     	scatteredPoints[i] = hull_gather[i];
@@ -352,13 +363,15 @@ int main(int argc, char*argv[]){
     // once each process has its set, perform parallel jarvis march
 	int finalHullSize;
 	Point * finalHull = performJarvisMarch(
-		scatteredPoints, scatterSize, &finalHullSize, myrank, numranks);
+		scatteredPoints, scatterSize, &finalHullSize, myrank, numranks, &commTime);
 
 	if (myrank == 0) {
 		ticks end = getticks();
 		printf("%llu to %llu\n", start, end);
 		printf("The final time was %f for %zu and %d ranks\n", 
 			((double)(end - start)) / CLOCK_RATE, totalPoints, numranks);
+		printf("The communication time was %f for %d ranks\n",
+			(double)commTime / CLOCK_RATE, numranks);
 		printf("The final convex hull was of size %d\n", finalHullSize);
 #ifdef DEBUG
 		for (int i = 0; i < finalHullSize; ++i) {
