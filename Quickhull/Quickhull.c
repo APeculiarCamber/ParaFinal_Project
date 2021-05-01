@@ -8,6 +8,18 @@
 
 #define LEAD_RANK 0
 #define STARTING_VECTOR_SIZE 64
+#define CLOCK_RATE 512000000.0 // for clock to seconds conversion
+
+typedef unsigned long long ticks;
+static __inline__ ticks getticks(void) {
+  unsigned int tbl, tbu0, tbu1;
+  do {
+       __asm__ __volatile__ ("mftbu %0" : "=r"(tbu0));
+       __asm__ __volatile__ ("mftb %0" : "=r"(tbl));
+       __asm__ __volatile__ ("mftbu %0" : "=r"(tbu1));
+     } while (tbu0 != tbu1);
+  return ((((unsigned long long)tbu0) << 32) | tbl);
+}
 
 int myrank;
 int numranks;
@@ -300,12 +312,9 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numranks);
 
-    double starttime, endtime;
+    ticks start_ticks = getticks();
+    ticks comm_overhead = 0;
 
-    if (myrank == 0) {
-        starttime = MPI_Wtime();
-    }
-    
     createPointType();
     createDistPointType();
 
@@ -327,8 +336,11 @@ int main(int argc, char* argv[])
 
     Point l = min(points);
     Point r = max(points);
+    ticks comm_start = getticks();
     l = reduceMin(l);
     r = reduceMax(r);
+    comm_overhead += (getticks() - comm_start);
+
 
     Vector hull = vectorInit(2);
     hull.pts[0] = l;
@@ -407,6 +419,7 @@ int main(int argc, char* argv[])
             max_pts[j] = dpts[max_ind];
             free(dpts);
         }
+        ticks comm_start = getticks();
         // SYNCHRONIZE MAX PT AND LOOP PARAMS
         // first, evaluate if we need to continue the recursion
         int act_result = 0;
@@ -414,6 +427,7 @@ int main(int argc, char* argv[])
         active = act_result;
         // perform reduction to find largest dist point
         reduceDist(max_pts, prev_size);
+        comm_overhead += (getticks() - comm_start);
         
         for (int j=0; j<prev_size; j++) {
             Vector pts = point_sets[j].points;
@@ -468,9 +482,14 @@ int main(int argc, char* argv[])
         printf("\n\nTHE CONVEX HULL IS:\n");
         outputHull(hull);
         #endif
-        endtime = MPI_Wtime();
-        printf("Time: %f seconds\n", endtime-starttime);
     }
     MPI_Barrier(MPI_COMM_WORLD);
+
+    if (myrank == 0) {
+        ticks end_ticks = getticks();
+        printf("Total Computation Time: %f\n", (double) (end_ticks - start_ticks) / CLOCK_RATE);
+        printf("Communication Overhead: %f\n", (double) (comm_overhead) / CLOCK_RATE);
+    }
+
     return true;
 }
