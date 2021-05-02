@@ -238,7 +238,9 @@ Point * performJarvisMarch(Point * pts, int ptsSize, int * hullSize,
 		localWinner = localJarvisMarch(pts, ptsSize, pivot);
 
 		// the leading rank 0 should gather local winners and perform local jarvis march again
+		commStart = getticks();
 		MPI_Gather(&localWinner, 1, MPI_POINT, rankWinners, 1, MPI_POINT, 0, MPI_COMM_WORLD);
+		*commTime += (getticks() - commStart);
 		if (myrank == 0)
 			pivot = localJarvisMarch(rankWinners, numranks, pivot); // reduce rank winners to pivot
 		i++;
@@ -360,7 +362,7 @@ int main(int argc, char*argv[]){
     // make free calls
     if (myrank == 0) { free(hull_gather); free(disp_array); free(hull_sizes); }
 
-    // once each process has its set, perform parallel jarvis march
+    // once each process has its set, perform parallel jarvis march.
 	int finalHullSize;
 	Point * finalHull = performJarvisMarch(
 		scatteredPoints, scatterSize, &finalHullSize, myrank, numranks, &commTime);
