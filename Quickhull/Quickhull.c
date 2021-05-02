@@ -85,8 +85,6 @@ void createDistPointType() {
     MPI_Type_commit(&MPI_DIST_POINT);
 }
 
-
-
 void readInData(char * fileName, Vector points, 
     int myrank, size_t stride) {
     MPI_File mpiFile;
@@ -95,8 +93,18 @@ void readInData(char * fileName, Vector points,
     int rc = MPI_File_open(MPI_COMM_WORLD, fileName, 
         MPI_MODE_RDONLY, MPI_INFO_NULL, &mpiFile);
     ensureReturnCode(rc, "opening file");
-    rc = MPI_File_read_at(mpiFile, sizeof(Point) * myrank * stride, points.pts,
+    if (numPoints == 268435456) {
+        rc = MPI_File_read_at(mpiFile, sizeof(Point) * myrank * stride, points.pts,
+             (points.size / 2), MPI_POINT, &stat);
+        ensureReturnCode(rc, "reading file");
+        rc = MPI_File_read_at(mpiFile, 
+            (myrank * stride * sizeof(Point)) + ((points.size / 2) * sizeof(Point)), 
+            points + (points.size / 2),
+            (points.size / 2), MPI_POINT, &stat);
+    } else {
+        rc = MPI_File_read_at(mpiFile, sizeof(Point) * myrank * stride, points.pts,
                   points.size, MPI_POINT, &stat);
+    }
     ensureReturnCode(rc, "reading file");
     rc = MPI_File_close(&mpiFile);
     ensureReturnCode(rc, "closing file");
