@@ -261,6 +261,10 @@ Point * performHullContstruction(Point * myPoints, unsigned myNumPoints, int num
             *commTime += (getticks() - start);
         }
     }
+    for (int i = 0; i < bottomSize; ++i)
+        printf("Bottom: %0.6f, %0.6f\n", bottomHull[i].x, bottomHull[i].y);
+    for (int i = 0; i < topSize; ++i)
+        printf("Top: %0.6f, %0.6f\n", topHull[i].x, topHull[i].y);
     // top hull must be reversed
     reversePointsArray(topHull, topSize);
     Point * concat = ConcatHulls(topHull, topSize, bottomHull, bottomSize, hullSize);
