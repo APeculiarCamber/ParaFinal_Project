@@ -5,7 +5,7 @@ Monotone Chain in the /Monotone_Chain directory
 
 
 POINTS.BIN:
-All programs assume that there is a ./pts directory with a "points.bin" file, which is a binary file containing packed 2D points.
+All programs assume that there is a "./pts" directory with a "points.bin" file, which is a binary file containing packed 2D points.
 See Point Generation Use.
 
 
