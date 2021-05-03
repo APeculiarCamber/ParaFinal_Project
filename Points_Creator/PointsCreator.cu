@@ -20,7 +20,7 @@ __global__ void data_kernel(Point* p_data, size_t numPoints, int seed,
     float leftX, float lowerY, float rightX, float upperY) {
 
     curandState_t state;
-    curand_init (seed + (128 * blockIdx.x) + (60000 * threadIdx.x), 0, 0, &state);
+    curand_init (seed + (128 * blockIdx.x) + (60055 * threadIdx.x), 0, 0, &state);
     float sizeX = rightX - leftX;
     float sizeY = upperY - lowerY;
 

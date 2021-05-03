@@ -288,10 +288,10 @@ int main(int argc, char*argv[]){
 		ticks End = getticks();
 		printf("The final time was %f\n", ((double)(End - start)) / CLOCK_RATE);
 		printf("The communication time was %f\n", (double)commTime / CLOCK_RATE);
-		printf("%llu to %llu\n", start, End);
+
 #ifdef DEBUG
 		if (myrank == 0) {
-			printf("The final convex hull was of size %d\n", subHullSize);
+			printf("THE CONVEX HULL IS:\n");
 			for (int i = 0; i < subHullSize; ++i) {
 				printf("{%f, %f}\n", subhull[i].x, subhull[i].y);
 			}
@@ -374,8 +374,8 @@ int main(int argc, char*argv[]){
 			((double)(end - start)) / CLOCK_RATE, totalPoints, numranks);
 		printf("The communication time was %f for %d ranks\n",
 			(double)commTime / CLOCK_RATE, numranks);
-		printf("The final convex hull was of size %d\n", finalHullSize);
 #ifdef DEBUG
+		printf("THE FINAL CONVEX HULL IS:\n");
 		for (int i = 0; i < finalHullSize; ++i) {
 			printf("{%f, %f}\n", finalHull[i].x, finalHull[i].y);
 		}

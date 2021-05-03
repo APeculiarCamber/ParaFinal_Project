@@ -58,33 +58,6 @@ void localSort(Point * points, size_t numPoints) {
     qsort (points, numPoints, sizeof(Point), comparePoints);
 }
 
-void readFromMPIFile(int myrank, int numranks, int numPoints) {
-    MPI_File mpiFile;
-    MPI_Status stat;
-    Point * points = malloc(numPoints * sizeof(Point));
-    int rc = MPI_File_open(MPI_COMM_WORLD, "points.bin", 
-        MPI_MODE_RDONLY, MPI_INFO_NULL, &mpiFile);
-
-    rc = MPI_File_read_at(mpiFile, sizeof(Point) * myrank * numPoints, points,
-        numPoints, MPI_POINT, &stat);
-
-    rc = MPI_File_close(&mpiFile);
-
-    for (int r = 0; r < numranks; ++r) {
-        if (r == myrank) {
-            printf("*For File Rank %d:\n", myrank);
-            for (int p = 0; p < numPoints; ++p)
-                printf("{%f, %f} for rank %d\n", points[p].x, points[p].y, myrank);
-            localSort(points, numPoints);
-            printf("*For File Rank %d:\n", myrank);
-            for (int p = 0; p < numPoints; ++p)
-                printf("{%f, %f} for rank %d\n", points[p].x, points[p].y, myrank);
-        }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-}
-
 int main(int argc, char* argv[])
 {
     int myrank, numranks;
@@ -126,7 +99,7 @@ int main(int argc, char* argv[])
 
     size_t numBlocks = ((numPoints) + (threadsCount - 1)) / threadsCount;
     numBlocks = (numBlocks > 65535) ? 65535 : numBlocks;
-    int seed = (10000 * myrank) + numranks;
+    int seed = (14129 * myrank) + numranks;
     if (sampleSquare) {
     	c_callKernel(numBlocks, threadsCount, p_data, numPoints, seed,
         	leftX, lowerY, rightX, upperY);
@@ -140,7 +113,6 @@ int main(int argc, char* argv[])
 #ifdef DEBUG
     for (int r = 0; r < numranks; ++r) {
         if (r == myrank) {
-            printf("*For Rank %d:\n", myrank);
             for (int p = 0; p < numPoints; ++p)
                 printf("{%f, %f}\n", p_data[p].x, p_data[p].y);
         }

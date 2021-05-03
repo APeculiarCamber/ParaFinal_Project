@@ -398,16 +398,6 @@ int main(int argc, char* argv[])
     else
         localSort(myREALPoints, numPoints);
 
-#ifdef DEBUG
-    for (int r = 0; r < numranks; ++r) {
-        if (r == myrank) {
-            for (int i = 0; i < total; ++i)
-                printf("Rank %d: {%f, %f}\n", myrank, myREALPoints[i].x, myREALPoints[i].y);
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-    printf("\n");
-#endif
 
     MPI_Barrier(MPI_COMM_WORLD);
     // perform the monotone chain
